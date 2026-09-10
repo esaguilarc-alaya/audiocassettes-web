@@ -1,64 +1,121 @@
 ---
 /**
- * "las cintas" preview grid — home page.
- * Placeholder cards only; no invented song/release titles presented
- * as real (Mission 01 placeholder discipline).
+ * "las cintas" preview grid — ported from
+ * reference/home-mockup-reference.html.
+ *
+ * `nombre de canción` is the mockup's own literal placeholder (in quotes,
+ * as written in the approved reference) — a real song title hasn't been
+ * chosen yet. The place names (Río Celeste, Cerro Chirripó, Puerto Viejo)
+ * are real Costa Rican locations named in the approved mockup, not
+ * invented content.
  */
-const placeholderCintas = [
-  { label: "cinta 01" },
-  { label: "cinta 02" },
-  { label: "cinta 03" },
+const cintas = [
+  { tag: "cinta 01", loc: "Río Celeste", gradient: "linear-gradient(150deg, var(--retro-pop), #2c6a63)" },
+  { tag: "cinta 02", loc: "Cerro Chirripó", gradient: "linear-gradient(150deg, var(--polaroid-sunset), #a85e26)" },
+  { tag: "cinta 03", loc: "Puerto Viejo", gradient: "linear-gradient(150deg, var(--stereo-blue), #013a4a)" },
 ];
 ---
 
-<section class="cintas-preview">
-  <h2>las cintas</h2>
-  <p>[ descripción real de la colección de cintas aquí ]</p>
-  <div class="cintas-preview__grid">
+<section class="block">
+  <div class="block-heading">
+    <h2>las cintas</h2>
+    <a class="see-all" href="/las-cintas">ver todas &rarr;</a>
+  </div>
+  <div class="cintas-grid">
     {
-      placeholderCintas.map((cinta) => (
-        <div class="placeholder-block cintas-preview__card">
-          <span>[ {cinta.label} — arte/título real aquí ]</span>
+      cintas.map((cinta) => (
+        <div class="cinta-card" style={`background: ${cinta.gradient};`}>
+          <span class="tag">{cinta.tag}</span>
+          <div class="place">
+            <div class="loc">{cinta.loc}</div>
+            <div class="song">grabado tocando "nombre de canción"</div>
+          </div>
         </div>
       ))
     }
   </div>
-  <a class="cintas-preview__link" href="/las-cintas">ver todas las cintas</a>
 </section>
 
 <style>
-  .cintas-preview {
-    max-width: 72rem;
+  .block {
+    max-width: 68.75rem;
     margin: 0 auto;
-    padding: var(--space-5) var(--space-4);
+    padding: 4rem 1rem;
   }
 
-  .cintas-preview h2 {
-    color: var(--polaroid-sunset);
-    font-size: 2rem;
-    margin-bottom: var(--space-2);
-  }
-
-  .cintas-preview__grid {
-    display: grid;
-    gap: var(--space-4);
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    margin-block: var(--space-4);
-  }
-
-  .cintas-preview__card {
-    aspect-ratio: 1 / 1;
+  .block-heading {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+    gap: 0.625rem;
   }
 
-  .cintas-preview__link {
-    display: inline-block;
+  .block-heading h2 {
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+
+  .see-all {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-decoration: none;
+    color: var(--stereo-blue);
+  }
+
+  .cintas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.125rem;
+  }
+
+  @media (max-width: 50rem) {
+    .cintas-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .cinta-card {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .cinta-card .tag {
+    position: absolute;
+    top: 0.875rem;
+    left: 0.875rem;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.625rem;
+    letter-spacing: 0.05em;
+    color: var(--vintage-sky);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.25rem 0.625rem;
+    border-radius: 1.875rem;
+  }
+
+  .cinta-card .place {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+  }
+
+  .cinta-card .loc {
     font-family: var(--font-display);
     font-weight: 600;
-    text-decoration: none;
-    color: var(--polaroid-sunset);
-    border-bottom: 2px solid var(--polaroid-sunset);
+    font-size: 1.0625rem;
+    color: var(--vintage-sky);
+  }
+
+  .cinta-card .song {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    color: var(--vintage-sky);
+    opacity: 0.75;
   }
 </style>

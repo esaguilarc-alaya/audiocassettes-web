@@ -3,10 +3,20 @@
  * Non-functional email signup UI.
  * No backend wiring, no API route — form does not submit anywhere.
  * See missions/MISSION_01_scaffold.md (out of scope: backend for sintoniza).
+ *
+ * `variant="dark"` matches the sintoniza footer treatment in
+ * reference/home-mockup-reference.html (transparent input on a
+ * stereo-blue background); default is the light treatment used on the
+ * standalone sintoniza.astro stub page.
  */
+interface Props {
+  variant?: "light" | "dark";
+}
+
+const { variant = "light" } = Astro.props;
 ---
 
-<form class="signup-form" onsubmit="return false;">
+<form class:list={["signup-form", `signup-form--${variant}`]} onsubmit="return false;">
   <label for="signup-email">tu correo</label>
   <div class="signup-form__row">
     <input
@@ -16,7 +26,7 @@
       placeholder="tu@correo.com"
       disabled
     />
-    <button type="submit" disabled>enterarme</button>
+    <button type="submit" disabled>grabar</button>
   </div>
   <p class="signup-form__note">[ formulario no funcional — sin backend aún ]</p>
 </form>
@@ -26,46 +36,78 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    max-width: 28rem;
+    max-width: 24rem;
   }
 
   .signup-form label {
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
     text-transform: lowercase;
   }
 
   .signup-form__row {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    gap: 0.625rem;
   }
 
   .signup-form input {
     flex: 1 1 12rem;
-    padding: var(--space-2) var(--space-3);
-    border: 2px solid var(--brown-tape);
-    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.875rem;
     font-family: var(--font-body);
-    font-size: 1rem;
+    font-size: 0.8125rem;
+    border-radius: 0;
   }
 
   .signup-form button {
-    padding: var(--space-2) var(--space-4);
+    padding: 0 1.25rem;
     border: none;
-    border-radius: var(--radius-sm);
-    background: var(--view-master);
-    color: var(--vintage-sky);
-    font-family: var(--font-display);
-    font-weight: 600;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.75rem;
     text-transform: lowercase;
     cursor: not-allowed;
+  }
+
+  /* light variant: standalone sintoniza.astro stub page */
+  .signup-form--light label {
+    color: var(--brown-tape);
+  }
+  .signup-form--light input {
+    border: 2px solid var(--brown-tape);
+    color: var(--brown-tape);
+    background: transparent;
+  }
+  .signup-form--light button {
+    background: var(--view-master);
+    color: var(--vintage-sky);
+  }
+
+  /* dark variant: sintoniza footer (matches the mockup) */
+  .signup-form--dark label {
+    color: var(--vintage-sky);
+  }
+  .signup-form--dark input {
+    border: 2px solid var(--vintage-sky);
+    color: var(--vintage-sky);
+    background: transparent;
+  }
+  .signup-form--dark input::placeholder {
+    color: rgba(255, 253, 199, 0.6);
+  }
+  .signup-form--dark button {
+    background: var(--polaroid-sunset);
+    color: var(--brown-tape);
   }
 
   .signup-form__note {
     margin: 0;
     font-size: 0.75rem;
     opacity: 0.7;
+  }
+
+  .signup-form--dark .signup-form__note {
+    color: var(--vintage-sky);
   }
 </style>

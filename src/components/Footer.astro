@@ -1,61 +1,116 @@
 ---
-import Stripe from "./Stripe.astro";
+/**
+ * Site footer — this IS the "sintoniza" block from
+ * reference/home-mockup-reference.html, used globally via BaseLayout so
+ * it appears on every page (matching the approved home page's structure,
+ * where the mockup's <footer> is the sintoniza section itself, not a
+ * generic nav footer).
+ *
+ * Social links point to "#" — real accounts aren't wired up yet; this is
+ * UI chrome carried over from the approved mockup, not fabricated content.
+ */
+import EmailSignupForm from "./EmailSignupForm.astro";
 
 const year = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
-  <div class="site-footer__row">
-    <p>&copy; {year} audiocassettes</p>
-    <nav aria-label="secciones (pie de página)">
-      <ul>
-        <li><a href="/lado-a-lado-b">lado a / lado b</a></li>
-        <li><a href="/las-cintas">las cintas</a></li>
-        <li><a href="/notas-de-cinta">notas de cinta</a></li>
-        <li><a href="/el-estuche">el estuche</a></li>
-        <li><a href="/sintoniza">sintoniza</a></li>
-      </ul>
-    </nav>
+  <div class="footer-inner">
+    <div>
+      <h2>sintoniza</h2>
+      <p>
+        Grabate en la lista y sé de los primeros en saber cuándo sale una
+        cinta nueva.
+      </p>
+      <EmailSignupForm variant="dark" />
+    </div>
+    <div class="footer-links">
+      <span class="fl-heading">síguenos</span>
+      <a href="#">Instagram</a>
+      <a href="#">YouTube</a>
+      <a href="#">Spotify</a>
+      <a href="#">Contacto directo</a>
+    </div>
   </div>
-  <Stripe />
+  <div class="footer-bottom">
+    <span>&copy; {year} audiocassettes — Costa Rica</span>
+    <span>el estuche (tienda) &middot; hecho con cariño, sin ataduras</span>
+  </div>
 </footer>
 
 <style>
-  .site-footer__row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    background: var(--brown-tape);
+  .site-footer {
+    background: var(--stereo-blue);
+    color: var(--vintage-sky);
+    padding: 3.5rem 1rem 2rem;
+  }
+
+  .footer-inner {
+    max-width: 68.75rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 2.5rem;
+  }
+
+  @media (max-width: 50rem) {
+    .footer-inner {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .site-footer h2 {
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 0.625rem;
     color: var(--vintage-sky);
   }
 
-  .site-footer__row p {
-    margin: 0;
-    font-size: 0.85rem;
+  .site-footer > .footer-inner > div > p {
+    font-size: 0.8125rem;
+    opacity: 0.85;
+    max-width: 22.5rem;
+    margin-bottom: 1.125rem;
   }
 
-  nav ul {
-    list-style: none;
+  .footer-links {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin: 0;
-    padding: 0;
+    flex-direction: column;
+    gap: 0.625rem;
   }
 
-  nav a {
+  .footer-links .fl-heading {
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    opacity: 0.7;
+    margin-bottom: 0.25rem;
+  }
+
+  .footer-links a {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    text-transform: none;
     color: var(--vintage-sky);
     text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    font-family: var(--font-body);
-    text-transform: lowercase;
+    opacity: 0.9;
   }
 
-  nav a:hover {
+  .footer-links a:hover {
+    opacity: 1;
     text-decoration: underline;
+  }
+
+  .footer-bottom {
+    max-width: 68.75rem;
+    margin: 2.5rem auto 0;
+    padding-top: 1.125rem;
+    border-top: 1px solid rgba(255, 253, 199, 0.25);
+    font-size: 0.6875rem;
+    opacity: 0.6;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 </style>

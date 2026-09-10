@@ -1,51 +1,165 @@
 ---
 /**
- * Home hero section.
- * Built from the Mission 01 spec description only (no approved mockup
- * was available for this pass) — first draft for review, not a port.
+ * Home hero section — ported from reference/home-mockup-reference.html.
  */
 ---
 
 <section class="hero">
-  <div class="hero__copy">
-    <h1>audiocassettes</h1>
-    <p class="hero__tagline">[ tagline/slogan real de la banda aquí ]</p>
+  <div>
+    <p class="hero-eyebrow">rock desde costa rica</p>
+    <h1>tocamos donde <em>otros no tocarían.</em></h1>
+    <p class="hero-copy">
+      Sin escenarios fijos ni gira formal — grabamos donde el país nos
+      lleva. Ríos, montañas, calles. Cada canción tiene un lugar.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-solid" href="/lado-a-lado-b">escuchar lado a</a>
+      <a class="btn btn-outline" href="/las-cintas">ver las cintas</a>
+    </div>
   </div>
-  <div class="placeholder-block hero__art">
-    [ foto/video real de la banda aquí ]
+  <div class="hero-visual">
+    <p class="label">
+      [ espacio para foto o video de portada — una sesión real en un
+      lugar de cr ]
+    </p>
+    <div class="play-hint">
+      <span class="dot"></span>
+      <span>grabado en Manuel Antonio</span>
+    </div>
   </div>
 </section>
 
 <style>
   .hero {
-    display: grid;
-    gap: var(--space-5);
-    padding: var(--space-6) var(--space-4);
-    max-width: 72rem;
+    max-width: 68.75rem;
     margin: 0 auto;
+    padding: 3.5rem 1rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 3rem;
+    align-items: center;
   }
 
-  @media (min-width: 48rem) {
+  @media (max-width: 50rem) {
     .hero {
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
+      grid-template-columns: 1fr;
+      padding-top: 2rem;
     }
   }
 
+  .hero-eyebrow {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    color: var(--stereo-blue);
+    margin-bottom: 0.875rem;
+  }
+
   .hero h1 {
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 700;
+    font-size: clamp(1.9rem, 5vw, 2.75rem);
+    line-height: 1.12;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero h1 em {
+    font-style: normal;
     color: var(--view-master);
   }
 
-  .hero__tagline {
-    font-size: 1.1rem;
-    max-width: 32rem;
+  .hero-copy {
+    font-size: 1rem;
+    opacity: 0.85;
+    max-width: 27.5rem;
+    margin-bottom: 1.75rem;
   }
 
-  .hero__art {
-    aspect-ratio: 4 / 3;
+  .hero-actions {
+    display: flex;
+    gap: 0.875rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    padding: 0.8125rem 1.625rem;
+    display: inline-block;
+    text-decoration: none;
+    border-radius: 2px;
+  }
+
+  .btn-solid {
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+    border: 2px solid var(--brown-tape);
+  }
+  .btn-solid:hover {
+    background: var(--view-master);
+    border-color: var(--view-master);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--brown-tape);
+    border: 2px solid var(--brown-tape);
+  }
+  .btn-outline:hover {
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+  }
+
+  .hero-visual {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 4px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(239, 154, 73, 0.5), transparent 55%),
+      radial-gradient(circle at 75% 70%, rgba(213, 72, 82, 0.45), transparent 55%),
+      linear-gradient(160deg, #3d241f, var(--brown-tape));
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .hero-visual .label {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--vintage-sky);
+    opacity: 0.7;
+    text-align: center;
+    padding: 0 1.5rem;
+  }
+
+  .play-hint {
+    position: absolute;
+    bottom: 1.125rem;
+    left: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 0.5rem 0.875rem;
+    border-radius: 1.875rem;
+  }
+
+  .play-hint .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--view-master);
+  }
+
+  .play-hint span:last-child {
+    font-size: 0.6875rem;
+    color: var(--vintage-sky);
+    font-family: var(--font-body);
+    font-weight: 600;
   }
 </style>

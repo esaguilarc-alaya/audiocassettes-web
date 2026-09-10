@@ -41,39 +41,41 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-4);
-    background: var(--brown-tape);
+    gap: var(--space-4);
+    max-width: 68.75rem;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-4) 0;
   }
 
   .wordmark {
-    color: var(--vintage-sky);
-    font-size: 1.5rem;
+    color: var(--brown-tape);
+    font-size: 1.375rem;
     font-weight: 700;
     text-decoration: none;
-    letter-spacing: 0.02em;
   }
 
   nav ul {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-4);
+    gap: 1.6rem;
     margin: 0;
     padding: 0;
   }
 
   nav a {
-    color: var(--vintage-sky);
+    color: var(--brown-tape);
     text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 600;
-    padding-block: var(--space-1);
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.85;
+    padding-bottom: 3px;
     border-bottom: 2px solid transparent;
   }
 
   nav a:hover,
   nav a[aria-current="page"] {
-    border-bottom-color: var(--polaroid-sunset);
+    opacity: 1;
+    border-bottom-color: var(--view-master);
   }
 </style>

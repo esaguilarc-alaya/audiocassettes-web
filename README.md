@@ -6,35 +6,42 @@ The official website for the band audiocassettes, built as a static Astro site w
 
 **Fredoka and Montserrat are a temporary substitution for the band's actual corporate font, Star Avenue**, pending delivery of the real font file. This is the one approved exception under this project's brand fidelity rule (see `missions/MISSION_01_scaffold.md`) — every other color, font, and section name in this codebase must trace to the brand manual or to an explicit decision recorded in a mission document.
 
-The brand manual has not yet been added to this repo as of this mission. Once it is, the "four-color stripe device" color selection in `src/components/Stripe.astro` (currently a placeholder pick of four of the six brand tokens) should be checked against it and corrected if it disagrees.
+The brand manual (`reference/Audiocassettes_Manual de Identidad.pdf`) and the approved home page mockup (`reference/home-mockup-reference.html`) are both in this repo. Confirmed against them:
+- All six color tokens in `src/styles/tokens.css` match the manual's palette page exactly.
+- Star Avenue → Fredoka is the correct substitution call (the manual names Star Avenue as the corporate font, Montserrat as complementary).
+- The four-color stripe device in `src/components/Stripe.astro` is **brown-tape → polaroid-sunset → view-master → retro-pop** (confirmed from the manual's "elementos complementarios" page and the mockup's own CSS) — an earlier draft of this component had guessed a different four before the manual was available; that guess has been corrected.
+
+**Known gap, not yet built:** the brand manual's isologo (the "audiocassettes" wordmark with a concentric-circle cassette-reel icon replacing the "o", p.7–9 of the manual) is not implemented. The header currently renders a plain-text wordmark. Building the actual isologo as an SVG asset is a reasonable scope for a follow-up mission rather than this one.
 
 ## Project structure
 
 ```text
 /
-├── missions/                    # this project's build history, one file per mission
+├── missions/                     # this project's build history, one file per mission
+├── reference/                    # approved source-of-truth artifacts (not built/deployed)
+│   ├── home-mockup-reference.html
+│   └── Audiocassettes_Manual de Identidad.pdf
 ├── src/
 │   ├── layouts/
-│   │   └── BaseLayout.astro     # shared <head>, fonts, Header/Footer
+│   │   └── BaseLayout.astro      # shared <head>, fonts, Header/Footer
 │   ├── components/
 │   │   ├── Header.astro
-│   │   ├── Footer.astro
-│   │   ├── Stripe.astro         # four-color stripe device
+│   │   ├── Footer.astro          # the "sintoniza" block — real site footer, every page
+│   │   ├── Stripe.astro          # four-color stripe device
 │   │   ├── Hero.astro
 │   │   ├── MusicTeaser.astro
 │   │   ├── LasCintasPreview.astro
 │   │   ├── NotasDeCintaTeaser.astro
-│   │   ├── SintonizaTeaser.astro
 │   │   └── EmailSignupForm.astro # non-functional UI, no backend
 │   ├── pages/
-│   │   ├── index.astro
+│   │   ├── index.astro           # ported from reference/home-mockup-reference.html
 │   │   ├── lado-a-lado-b.astro   # stub
 │   │   ├── las-cintas.astro      # stub
 │   │   ├── notas-de-cinta.astro  # stub
 │   │   ├── el-estuche.astro      # stub
 │   │   └── sintoniza.astro       # stub — static only, no backend
 │   └── styles/
-│       ├── tokens.css           # design tokens (colors, fonts, spacing)
+│       ├── tokens.css            # design tokens (colors, fonts, spacing)
 │       └── global.css
 └── package.json
 ```

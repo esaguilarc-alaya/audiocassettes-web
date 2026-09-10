@@ -1,41 +1,98 @@
 ---
 /**
- * "notas de cinta" teaser block — home page.
+ * "notas de cinta" teaser block — ported from
+ * reference/home-mockup-reference.html. Copy matches the misión/valores
+ * language in the brand manual ("sin ataduras a la fama o el dinero...").
  */
 ---
 
-<section class="notas-teaser">
-  <h2>notas de cinta</h2>
-  <p>[ descripción real de la sección de notas/blog de la banda aquí ]</p>
-  <div class="placeholder-block">
-    [ vista previa real de una entrada aquí ]
+<section class="block">
+  <div class="notas-teaser">
+    <div class="card">
+      <p class="eyebrow">notas de cinta</p>
+      <h3>somos un grupo de amigos haciendo arte desde la autenticidad.</h3>
+      <p>
+        Sin ataduras a la fama o el dinero, pero con la convicción de
+        darlo todo en cada canción. Conocé la historia completa detrás de
+        Audiocassettes.
+      </p>
+      <a class="btn btn-solid" href="/notas-de-cinta">leer notas</a>
+    </div>
+    <div class="placeholder-block photo-block">
+      [ espacio para foto de banda ]
+    </div>
   </div>
-  <a class="notas-teaser__link" href="/notas-de-cinta">leer notas de cinta</a>
 </section>
 
 <style>
-  .notas-teaser {
-    max-width: 72rem;
+  .block {
+    max-width: 68.75rem;
     margin: 0 auto;
-    padding: var(--space-5) var(--space-4);
+    padding: 4rem 1rem;
   }
 
-  .notas-teaser h2 {
-    color: var(--retro-pop);
-    font-size: 2rem;
-    margin-bottom: var(--space-2);
+  .notas-teaser {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
   }
 
-  .notas-teaser > .placeholder-block {
-    margin-block: var(--space-4);
+  @media (max-width: 50rem) {
+    .notas-teaser {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .notas-teaser__link {
-    display: inline-block;
+  .card {
+    background: rgba(89, 51, 44, 0.06);
+    border: 2px solid var(--brown-tape);
+    padding: 1.75rem;
+  }
+
+  .card .eyebrow {
     font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--view-master);
+    margin-bottom: 0.375rem;
+  }
+
+  .card h3 {
     font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card p:not(.eyebrow) {
+    font-size: 0.875rem;
+    opacity: 0.85;
+    margin-bottom: 1rem;
+  }
+
+  .card .btn-solid {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
     text-decoration: none;
-    color: var(--retro-pop);
-    border-bottom: 2px solid var(--retro-pop);
+    padding: 0.8125rem 1.625rem;
+    border-radius: 2px;
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+    border: 2px solid var(--brown-tape);
+  }
+
+  .card .btn-solid:hover {
+    background: var(--view-master);
+    border-color: var(--view-master);
+  }
+
+  .photo-block {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>

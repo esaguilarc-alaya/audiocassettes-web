@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>audiocassettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --retro-pop: #4DA495;
+    --stereo-blue: #006080;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--vintage-sky);
+    color: var(--brown-tape);
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.5;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .stripe {
+    display: flex;
+    height: 5px;
+  }
+  .stripe span { flex: 1; }
+  .stripe span:nth-child(1) { background: var(--brown-tape); }
+  .stripe span:nth-child(2) { background: var(--polaroid-sunset); }
+  .stripe span:nth-child(3) { background: var(--view-master); }
+  .stripe span:nth-child(4) { background: var(--retro-pop); }
+
+  /* ---------- NAV ---------- */
+  header {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 22px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .wordmark {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+  }
+
+  nav {
+    display: flex;
+    gap: 26px;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    opacity: 0.85;
+    position: relative;
+    padding-bottom: 3px;
+  }
+
+  nav a:hover { opacity: 1; }
+  nav a:hover::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--view-master);
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 56px 24px 40px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  @media (max-width: 800px) {
+    .hero { grid-template-columns: 1fr; padding-top: 32px; }
+  }
+
+  .hero-eyebrow {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--stereo-blue);
+    margin-bottom: 14px;
+  }
+
+  .hero h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1.12;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--view-master);
+  }
+
+  .hero p {
+    font-size: 16px;
+    opacity: 0.85;
+    max-width: 440px;
+    margin-bottom: 28px;
+  }
+
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+  .btn {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    padding: 13px 26px;
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  .btn-solid {
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+    border: 2px solid var(--brown-tape);
+  }
+  .btn-solid:hover { background: var(--view-master); border-color: var(--view-master); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--brown-tape);
+    border: 2px solid var(--brown-tape);
+  }
+  .btn-outline:hover { background: var(--brown-tape); color: var(--vintage-sky); }
+
+  .hero-visual {
+    position: relative;
+    aspect-ratio: 4/5;
+    border-radius: 4px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(239,154,73,0.5), transparent 55%),
+      radial-gradient(circle at 75% 70%, rgba(213,72,82,0.45), transparent 55%),
+      linear-gradient(160deg, #3d241f, var(--brown-tape));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-visual .label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--vintage-sky);
+    opacity: 0.7;
+    text-align: center;
+    padding: 0 24px;
+  }
+
+  .hero-visual .play-hint {
+    position: absolute;
+    bottom: 18px;
+    left: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.35);
+    padding: 8px 14px;
+    border-radius: 30px;
+  }
+  .play-hint .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--view-master);
+  }
+  .play-hint span {
+    font-size: 11px;
+    color: var(--vintage-sky);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ---------- SECTION SHARED ---------- */
+  section.block {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 64px 24px;
+  }
+
+  .block-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .block-heading h2 {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .block-heading .see-all {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--stereo-blue);
+  }
+
+  /* ---------- LADO A/B TEASER ---------- */
+  .music-teaser {
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+    border-radius: 4px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+
+  .reel-icon {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+  .reel-icon svg { width: 100%; height: 100%; }
+
+  .music-teaser-text { flex: 1; min-width: 220px; }
+
+  .music-teaser-text .eyebrow {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 12px;
+    color: var(--polaroid-sunset);
+    margin-bottom: 6px;
+  }
+
+  .music-teaser-text h3 {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+
+  .music-teaser-text p {
+    font-size: 13px;
+    opacity: 0.8;
+    max-width: 380px;
+  }
+
+  /* ---------- LAS CINTAS GRID ---------- */
+  .cintas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  @media (max-width: 800px) {
+    .cintas-grid { grid-template-columns: 1fr; }
+  }
+
+  .cinta-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .cinta-card:nth-child(1) { background: linear-gradient(150deg, var(--retro-pop), #2c6a63); }
+  .cinta-card:nth-child(2) { background: linear-gradient(150deg, var(--polaroid-sunset), #a85e26); }
+  .cinta-card:nth-child(3) { background: linear-gradient(150deg, var(--stereo-blue), #013a4a); }
+
+  .cinta-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(255,253,199,0.05) 3px,
+      transparent 4px
+    );
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .cinta-card:hover::before { opacity: 1; }
+
+  .cinta-card .tag {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--vintage-sky);
+    background: rgba(0,0,0,0.3);
+    padding: 4px 10px;
+    border-radius: 30px;
+  }
+
+  .cinta-card .place {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+  }
+
+  .cinta-card .place .loc {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--vintage-sky);
+  }
+
+  .cinta-card .place .song {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    color: var(--vintage-sky);
+    opacity: 0.75;
+  }
+
+  /* ---------- NOTAS DE CINTA TEASER ---------- */
+  .notas-teaser {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  @media (max-width: 800px) {
+    .notas-teaser { grid-template-columns: 1fr; }
+  }
+
+  .notas-teaser .card {
+    background: rgba(89,51,44,0.06);
+    border: 2px solid var(--brown-tape);
+    padding: 28px;
+  }
+
+  .notas-teaser .card p {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-top: 12px;
+  }
+
+  .notas-teaser .eyebrow {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 12px;
+    color: var(--view-master);
+  }
+
+  /* ---------- SINTONIZA / FOOTER ---------- */
+  footer {
+    background: var(--stereo-blue);
+    color: var(--vintage-sky);
+    padding: 56px 24px 32px;
+  }
+
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 40px;
+  }
+
+  @media (max-width: 800px) {
+    .footer-inner { grid-template-columns: 1fr; }
+  }
+
+  footer h3 {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  footer p { font-size: 13px; opacity: 0.85; max-width: 360px; margin-bottom: 18px; }
+
+  .signup-row {
+    display: flex;
+    gap: 10px;
+    max-width: 380px;
+  }
+
+  .signup-row input {
+    flex: 1;
+    background: transparent;
+    border: 2px solid var(--vintage-sky);
+    padding: 12px 14px;
+    color: var(--vintage-sky);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+  }
+  .signup-row input::placeholder { color: rgba(255,253,199,0.6); }
+
+  .signup-row button {
+    background: var(--polaroid-sunset);
+    border: 2px solid var(--polaroid-sunset);
+    color: var(--brown-tape);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 20px;
+    cursor: pointer;
+  }
+
+  .footer-links { display: flex; flex-direction: column; gap: 10px; }
+  .footer-links .fl-heading {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .footer-links a { font-size: 13px; opacity: 0.9; }
+  .footer-links a:hover { opacity: 1; text-decoration: underline; }
+
+  .footer-bottom {
+    max-width: 1100px;
+    margin: 40px auto 0;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,253,199,0.25);
+    font-size: 11px;
+    opacity: 0.6;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stripe"><span></span><span></span><span></span><span></span></div>
+
+<header>
+  <div class="wordmark">audiocassettes</div>
+  <nav>
+    <a href="#">lado a / lado b</a>
+    <a href="#">las cintas</a>
+    <a href="#">notas de cinta</a>
+    <a href="#">el estuche</a>
+    <a href="#">sintoniza</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <p class="hero-eyebrow">rock desde costa rica</p>
+    <h1>tocamos donde <em>otros no tocarían.</em></h1>
+    <p>Sin escenarios fijos ni gira formal — grabamos donde el país nos lleva. Ríos, montañas, calles. Cada canción tiene un lugar.</p>
+    <div class="hero-actions">
+      <a class="btn btn-solid" href="#">escuchar lado a</a>
+      <a class="btn btn-outline" href="#">ver las cintas</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <p class="label">[ espacio para foto o video de portada —<br>una sesión real en un lugar de cr ]</p>
+    <div class="play-hint">
+      <span class="dot"></span>
+      <span>grabado en Manuel Antonio</span>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="music-teaser">
+    <div class="reel-icon">
+      <svg viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="36" fill="#4DA495"/>
+        <circle cx="36" cy="36" r="27" fill="#EF9A49"/>
+        <circle cx="36" cy="36" r="18" fill="#D54852"/>
+        <circle cx="36" cy="36" r="9" fill="#FFFDC7"/>
+      </svg>
+    </div>
+    <div class="music-teaser-text">
+      <p class="eyebrow">lado a / lado b</p>
+      <h3>nuestras canciones, como siempre debieron escucharse.</h3>
+      <p>El reproductor completo, sin distribuidoras de por medio.</p>
+    </div>
+    <a class="btn btn-outline" href="#" style="border-color:#FFFDC7; color:#FFFDC7;">poner play</a>
+  </div>
+</section>
+
+<section class="block">
+  <div class="block-heading">
+    <h2>las cintas</h2>
+    <a class="see-all" href="#">ver todas &rarr;</a>
+  </div>
+  <div class="cintas-grid">
+    <div class="cinta-card">
+      <span class="tag">cinta 01</span>
+      <div class="place">
+        <div class="loc">Río Celeste</div>
+        <div class="song">grabado tocando "nombre de canción"</div>
+      </div>
+    </div>
+    <div class="cinta-card">
+      <span class="tag">cinta 02</span>
+      <div class="place">
+        <div class="loc">Cerro Chirripó</div>
+        <div class="song">grabado tocando "nombre de canción"</div>
+      </div>
+    </div>
+    <div class="cinta-card">
+      <span class="tag">cinta 03</span>
+      <div class="place">
+        <div class="loc">Puerto Viejo</div>
+        <div class="song">grabado tocando "nombre de canción"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="notas-teaser">
+    <div class="card">
+      <p class="eyebrow">notas de cinta</p>
+      <h3 style="font-family:'Fredoka',sans-serif; font-weight:600; font-size:20px; margin-top:6px;">somos un grupo de amigos haciendo arte desde la autenticidad.</h3>
+      <p>Sin ataduras a la fama o el dinero, pero con la convicción de darlo todo en cada canción. Conocé la historia completa detrás de Audiocassettes.</p>
+      <a class="btn btn-solid" href="#" style="margin-top:16px; display:inline-block;">leer notas</a>
+    </div>
+    <div class="hero-visual" style="aspect-ratio: 1/1;">
+      <p class="label">[ espacio para foto de banda ]</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <h3>sintoniza</h3>
+      <p>Grabate en la lista y sé de los primeros en saber cuándo sale una cinta nueva.</p>
+      <div class="signup-row">
+        <input type="email" placeholder="tu correo">
+        <button>grabar</button>
+      </div>
+    </div>
+    <div class="footer-links">
+      <span class="fl-heading">síguenos</span>
+      <a href="#">Instagram</a>
+      <a href="#">YouTube</a>
+      <a href="#">Spotify</a>
+      <a href="#">Contacto directo</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; audiocassettes — Costa Rica</span>
+    <span>el estuche (tienda) &middot; hecho con cariño, sin ataduras</span>
+  </div>
+</footer>
+
+</body>
+</html>
