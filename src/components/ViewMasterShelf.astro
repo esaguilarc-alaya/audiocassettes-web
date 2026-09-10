@@ -1,0 +1,766 @@
+---
+/**
+ * ViewMasterShelf — Mission 08
+ * (missions/MISSION_08_las-cintas-viewmaster.md).
+ *
+ * Replaces Mission 02/03's always-open `Reel` cards with a two-level
+ * interaction: a shelf of View-Master-style disks (one per session),
+ * and a single shared viewer dialog you zoom into by clicking a disk.
+ * The flow (shelf → disk → viewer with lever/back-tap → full-size
+ * open → close back to shelf) is ported faithfully from
+ * reference/las-cintas-viewmaster-flow-reference.html, which Esteban
+ * reviewed and approved for FLOW only — the disk/viewer/eyepiece
+ * visuals below are this project's own design (brand tokens only,
+ * per Rule 1), not a port of that mockup's placeholder styling.
+ *
+ * Design choices for the "real View-Master toy" look (flagged per
+ * the mission's request to record these in the response file):
+ *   - Disk: --vintage-sky face (reads as light cardboard/film stock)
+ *     with a --brown-tape rim and a sprocket-hole ring, a colored hub
+ *     that cycles deterministically through the five non-cream/non-
+ *     brown-tape... — see DISK_COLORS below for the exact fixed order
+ *     the mission specifies.
+ *   - Viewer: a --brown-tape body (matches the existing video modal's
+ *     frame color) with two small "lens" circles up top (the classic
+ *     View-Master twin-eyepiece silhouette) and an oval "eyepiece"
+ *     (an authentic View-Master trait, not a stylistic flourish) whose
+ *     tunnel interior is plain black — the exact same non-token
+ *     neutral already used for the video modal's embed background
+ *     (`background: black` in the old
+ *     Reel.astro), not a new invented brand color.
+ *
+ * Interaction mechanics (lever/back-tap/dots/looping) are the exact
+ * same logic Mission 02/03 shipped in the old Reel.astro, now scoped
+ * per-disk within one shared viewer instead of N always-visible
+ * instances. Clicking anywhere in the eyepiece's right half (not just
+ * a small play-badge) now opens the current frame full-size — video
+ * frames via the existing branded modal, everything else via a new,
+ * visually-matching photo full-view — per this mission's explicit
+ * scope (broadening the old play-badge-only click target).
+ */
+interface Frame {
+  type: "video" | "photo" | "band-photo" | "art";
+  label: string;
+  /** Required when type === "video"; an obviously-fake placeholder ID. */
+  videoId?: string;
+}
+
+interface Disk {
+  id: string;
+  location: string;
+  frames: Frame[];
+}
+
+interface Props {
+  disks: Disk[];
+}
+
+const { disks } = Astro.props;
+
+const frameCopy: Record<Frame["type"], string> = {
+  video: "[ video real aquí — placeholder ]",
+  photo: "[ foto real aquí — placeholder ]",
+  "band-photo": "[ foto de banda, de época — placeholder ]",
+  art: "[ arte de banda — placeholder ]",
+};
+
+// Fixed, deterministic cycling order — Mission 08's own scope names
+// this exact sequence; not an invented or approximated palette.
+const DISK_COLORS = [
+  "--view-master",
+  "--retro-pop",
+  "--polaroid-sunset",
+  "--brown-tape",
+  "--stereo-blue",
+] as const;
+---
+
+<div class="vm">
+  <div class="vm-shelf" id="vmShelf">
+    {
+      disks.map((disk, i) => (
+        <button
+          type="button"
+          class="vm-disk-slot"
+          data-disk-index={i}
+          data-location={disk.location}
+          aria-haspopup="dialog"
+        >
+          <span
+            class="vm-disk"
+            style={`--disk-color: var(${DISK_COLORS[i % DISK_COLORS.length]})`}
+          >
+            <span class="vm-hub" aria-hidden="true">
+              &#9658;
+            </span>
+          </span>
+          <span class="vm-disk-title">{disk.location}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <dialog class="vm-viewer" id="vmViewer" aria-label="visor de cinta">
+    <div class="vm-viewer__body">
+      <div class="vm-lenses" aria-hidden="true">
+        <span class="vm-lens" />
+        <span class="vm-lens" />
+      </div>
+      <div class="vm-viewer__top">
+        <span class="vm-viewer__title" id="vmViewerTitle" />
+        <button
+          type="button"
+          class="vm-viewer__close"
+          aria-label="cerrar visor, volver al estante"
+        >
+          &#10005;
+        </button>
+      </div>
+      <div class="vm-eyepiece" id="vmEyepiece">
+        {
+          disks.map((disk, di) => (
+            <div class="vm-frame-stack" data-disk-index={di} hidden>
+              {disk.frames.map((frame, fi) => (
+                <figure
+                  class:list={["vm-frame", { "is-active": fi === 0 }]}
+                  data-index={fi}
+                  data-frame-type={frame.type}
+                  data-video-id={frame.videoId}
+                >
+                  <div class="frame-media placeholder-block">
+                    <span>{frameCopy[frame.type]}</span>
+                  </div>
+                  {frame.type === "video" && (
+                    <span class="vm-play-badge" aria-hidden="true">
+                      &#9658;
+                    </span>
+                  )}
+                  <figcaption>{frame.label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          ))
+        }
+        <span class="vm-back-hint" aria-hidden="true">
+          &#8249;
+        </span>
+      </div>
+      <div class="vm-controls">
+        <button type="button" class="vm-lever" aria-label="avanzar cinta">
+          <span class="vm-lever__grip" />
+        </button>
+        <div class="vm-dots-wrap">
+          {
+            disks.map((disk, di) => (
+              <div class="vm-dots" data-disk-index={di} hidden role="presentation">
+                {disk.frames.map((_, fi) => (
+                  <span class:list={["vm-dot", { "is-active": fi === 0 }]} />
+                ))}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="vm-modal" id="vmVideoModal">
+    <div class="vm-modal__frame">
+      <button type="button" class="vm-modal__close" aria-label="cerrar video">
+        &#10005;
+      </button>
+      <div class="vm-modal__embed">
+        <iframe
+          id="vmVideoIframe"
+          src=""
+          title="video placeholder — audiocassettes"
+          loading="lazy"
+          allow="encrypted-media"
+        />
+      </div>
+      <p class="vm-modal__note">
+        [ video no funcional — ID de YouTube de relleno, sin contenido real
+        de la banda todavía ]
+      </p>
+    </div>
+  </dialog>
+
+  <dialog class="vm-modal" id="vmPhotoModal">
+    <div class="vm-modal__frame">
+      <button type="button" class="vm-modal__close" aria-label="cerrar foto">
+        &#10005;
+      </button>
+      <div class="vm-modal__photo placeholder-block" id="vmPhotoBody">
+        <span id="vmPhotoText" />
+      </div>
+    </div>
+  </dialog>
+</div>
+
+<style>
+  /* -------------------- Shelf -------------------- */
+  .vm-shelf {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+    gap: var(--space-5);
+    justify-items: center;
+  }
+
+  .vm-disk-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    padding: var(--space-2);
+    max-width: 11rem;
+  }
+
+  .vm-disk {
+    position: relative;
+    width: 9rem;
+    height: 9rem;
+    border-radius: 50%;
+    background: var(--vintage-sky);
+    border: 3px solid var(--brown-tape);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .vm-disk-slot:hover .vm-disk,
+  .vm-disk-slot:focus-visible .vm-disk {
+    transform: scale(1.06) rotate(6deg);
+  }
+
+  .vm-disk::before {
+    /* sprocket-hole ring — a real View-Master disc trait */
+    content: "";
+    position: absolute;
+    inset: 0.5rem;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+      color-mix(in srgb, var(--brown-tape) 18%, transparent) 0deg 4deg,
+      transparent 4deg 26deg
+    );
+  }
+
+  .vm-hub {
+    position: relative;
+    z-index: 1;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--disk-color, var(--view-master));
+    box-shadow: 0 0 0 0.25rem var(--vintage-sky);
+    color: var(--vintage-sky);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+
+  .vm-disk-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-align: center;
+    color: var(--brown-tape);
+  }
+
+  /* -------------------- Viewer dialog -------------------- */
+  .vm-viewer {
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    max-width: min(26rem, 92vw);
+    width: 100%;
+  }
+
+  .vm-viewer::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .vm-viewer__body {
+    background: var(--brown-tape);
+    border-radius: var(--radius-md);
+    padding: var(--space-4) var(--space-3) var(--space-4);
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.5);
+  }
+
+  @keyframes vm-viewer-in {
+    from {
+      transform: scale(0.85);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .vm-viewer__body.vm-entering {
+    animation: vm-viewer-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .vm-lenses {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: center;
+    margin-bottom: var(--space-2);
+  }
+
+  .vm-lens {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--vintage-sky);
+    opacity: 0.35;
+  }
+
+  .vm-viewer__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .vm-viewer__title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--vintage-sky);
+  }
+
+  .vm-viewer__close {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    border: 2px solid var(--vintage-sky);
+    background: var(--view-master);
+    color: var(--vintage-sky);
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .vm-viewer__close:hover {
+    background: var(--polaroid-sunset);
+  }
+
+  .vm-eyepiece {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    /* A gently elongated oval — the View-Master eyepiece tunnel, a
+       real trait of the toy, not a decorative flourish. A much
+       larger horizontal radius (e.g. 999px) tapers the corners so
+       aggressively that the frame content gets clipped into a
+       narrow lens shape, leaving distracting dark voids — confirmed
+       by rendering it, not assumed. */
+    border-radius: 3rem / 34%;
+    /* Plain black, not a new invented neutral — same non-token
+       "looking into an empty screen" precedent already used for the
+       video modal's embed background since Mission 02
+       (.reel-modal__embed { background: black }). */
+    background: black;
+    box-shadow:
+      inset 0 0 0 0.375rem var(--vintage-sky),
+      inset 0 0 1.5rem rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .vm-frame-stack {
+    position: absolute;
+    inset: 0;
+  }
+
+  .vm-frame {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    text-align: center;
+    background: var(--vintage-sky);
+  }
+
+  .vm-frame.is-active {
+    display: flex;
+  }
+
+  .vm-frame .frame-media {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+  }
+
+  .vm-frame figcaption {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--brown-tape);
+  }
+
+  @keyframes vm-frame-in-forward {
+    from {
+      transform: translateX(60%) rotate(12deg);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes vm-frame-in-back {
+    from {
+      transform: translateX(-60%) rotate(-12deg);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  .vm-frame.frame-enter-forward {
+    animation: vm-frame-in-forward 380ms ease-out;
+  }
+
+  .vm-frame.frame-enter-back {
+    animation: vm-frame-in-back 380ms ease-out;
+  }
+
+  .vm-play-badge {
+    position: absolute;
+    top: 0.625rem;
+    left: 0.625rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    pointer-events: none;
+  }
+
+  .vm-back-hint {
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    transform: translateY(-50%);
+    color: var(--vintage-sky);
+    opacity: 0.5;
+    font-size: 1.5rem;
+    pointer-events: none;
+  }
+
+  .vm-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+  }
+
+  .vm-lever {
+    width: 2.75rem; /* >= 44px, the minimum comfortable touch target */
+    height: 6.5rem;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--vintage-sky);
+    background: var(--retro-pop);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 0.375rem;
+    transition: transform 120ms ease-out;
+  }
+
+  .vm-lever:hover {
+    background: var(--view-master);
+  }
+
+  .vm-lever:active {
+    transform: translateY(0.375rem);
+  }
+
+  .vm-lever__grip {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: var(--vintage-sky);
+  }
+
+  .vm-dots-wrap {
+    display: flex;
+  }
+
+  /* [hidden] alone isn't enough here: our own unconditional
+     `.vm-dots { display: flex }` rule below is author-origin and
+     beats the UA stylesheet's `[hidden] { display: none }` in the
+     cascade regardless of specificity (same lesson as Mission 03's
+     mobile nav toggle) — so the hidden dot-group would otherwise
+     stay visible. */
+  .vm-dots[hidden] {
+    display: none;
+  }
+
+  .vm-dots {
+    display: flex;
+    gap: 0.375rem;
+  }
+
+  .vm-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--vintage-sky);
+    opacity: 0.3;
+  }
+
+  .vm-dot.is-active {
+    opacity: 1;
+  }
+
+  /* -------------------- Video / photo full-view modals -------------------- */
+  .vm-modal {
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    max-width: 32rem;
+    width: 90vw;
+  }
+
+  .vm-modal::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .vm-modal__frame {
+    background: var(--vintage-sky);
+    border: 0.5rem solid var(--brown-tape);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    position: relative;
+  }
+
+  .vm-modal__close {
+    position: absolute;
+    top: -0.75rem;
+    right: -0.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--view-master);
+    color: var(--vintage-sky);
+    border: 2px solid var(--vintage-sky);
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .vm-modal__embed {
+    aspect-ratio: 16 / 9;
+    background: black;
+  }
+
+  .vm-modal__embed iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .vm-modal__photo {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .vm-modal__note {
+    margin: var(--space-2) 0 0;
+    font-size: 0.75rem;
+    color: var(--brown-tape);
+    opacity: 0.75;
+    text-align: center;
+  }
+</style>
+
+<script>
+  function initViewMaster() {
+    const shelf = document.getElementById("vmShelf");
+    const viewer = document.getElementById("vmViewer") as HTMLDialogElement | null;
+    const viewerBody = viewer?.querySelector<HTMLElement>(".vm-viewer__body");
+    const viewerTitle = document.getElementById("vmViewerTitle");
+    const viewerClose = viewer?.querySelector<HTMLButtonElement>(".vm-viewer__close");
+    const eyepiece = document.getElementById("vmEyepiece");
+    const lever = viewer?.querySelector<HTMLButtonElement>(".vm-lever");
+    const frameStacks = Array.from(
+      document.querySelectorAll<HTMLElement>(".vm-frame-stack"),
+    );
+    const dotsGroups = Array.from(document.querySelectorAll<HTMLElement>(".vm-dots"));
+
+    const videoModal = document.getElementById("vmVideoModal") as HTMLDialogElement | null;
+    const videoIframe = document.getElementById("vmVideoIframe") as HTMLIFrameElement | null;
+    const photoModal = document.getElementById("vmPhotoModal") as HTMLDialogElement | null;
+    const photoText = document.getElementById("vmPhotoText");
+
+    if (!shelf || !viewer || !eyepiece) return;
+
+    let currentDisk = 0;
+    let currentFrame = 0;
+
+    function framesFor(diskIndex: number) {
+      const stack = frameStacks.find(
+        (s) => s.dataset.diskIndex === String(diskIndex),
+      );
+      return stack ? Array.from(stack.querySelectorAll<HTMLElement>(".vm-frame")) : [];
+    }
+
+    function render(direction: "forward" | "back") {
+      const frames = framesFor(currentDisk);
+      frames.forEach((f, i) => f.classList.toggle("is-active", i === currentFrame));
+
+      const dots = dotsGroups.find((d) => d.dataset.diskIndex === String(currentDisk));
+      if (dots) {
+        Array.from(dots.querySelectorAll<HTMLElement>(".vm-dot")).forEach((d, i) =>
+          d.classList.toggle("is-active", i === currentFrame),
+        );
+      }
+
+      const activeFrame = frames[currentFrame];
+      if (activeFrame) {
+        activeFrame.classList.remove("frame-enter-forward", "frame-enter-back");
+        void activeFrame.offsetWidth;
+        activeFrame.classList.add(
+          direction === "back" ? "frame-enter-back" : "frame-enter-forward",
+        );
+      }
+    }
+
+    function goTo(index: number, direction: "forward" | "back") {
+      const frames = framesFor(currentDisk);
+      if (!frames.length) return;
+      currentFrame = (index + frames.length) % frames.length;
+      render(direction);
+    }
+
+    function openViewer(diskIndex: number) {
+      currentDisk = diskIndex;
+      currentFrame = 0;
+
+      frameStacks.forEach((s) =>
+        s.toggleAttribute("hidden", s.dataset.diskIndex !== String(diskIndex)),
+      );
+      dotsGroups.forEach((d) =>
+        d.toggleAttribute("hidden", d.dataset.diskIndex !== String(diskIndex)),
+      );
+
+      const slot = shelf?.querySelector<HTMLElement>(
+        `.vm-disk-slot[data-disk-index="${diskIndex}"]`,
+      );
+      if (viewerTitle) viewerTitle.textContent = slot?.dataset.location ?? "";
+
+      render("forward");
+      viewer?.showModal();
+
+      if (viewerBody) {
+        viewerBody.classList.remove("vm-entering");
+        void viewerBody.offsetWidth;
+        viewerBody.classList.add("vm-entering");
+      }
+    }
+
+    function closeViewer() {
+      viewer?.close();
+    }
+
+    shelf.querySelectorAll<HTMLButtonElement>(".vm-disk-slot").forEach((slot) => {
+      slot.addEventListener("click", () => {
+        const index = parseInt(slot.dataset.diskIndex ?? "0", 10);
+        openViewer(index);
+      });
+    });
+
+    viewerClose?.addEventListener("click", closeViewer);
+    // Escape-to-close is native <dialog> behavior — no extra JS needed.
+
+    lever?.addEventListener("click", () => goTo(currentFrame + 1, "forward"));
+
+    function openFull() {
+      const frames = framesFor(currentDisk);
+      const frame = frames[currentFrame];
+      if (!frame) return;
+      const type = frame.dataset.frameType;
+      if (type === "video") {
+        const id = frame.dataset.videoId;
+        if (videoModal && videoIframe && id) {
+          videoIframe.src = `https://www.youtube.com/embed/${id}`;
+          videoModal.showModal();
+        }
+      } else {
+        const label = frame.querySelector("figcaption")?.textContent ?? "";
+        const bodyText = frame.querySelector(".frame-media span")?.textContent ?? "";
+        if (photoModal && photoText) {
+          photoText.textContent = `${bodyText} — ${label}`;
+          photoModal.showModal();
+        }
+      }
+    }
+
+    eyepiece.addEventListener("click", (event) => {
+      const rect = eyepiece.getBoundingClientRect();
+      const clickX = (event as MouseEvent).clientX - rect.left;
+      if (clickX < rect.width / 2) {
+        goTo(currentFrame - 1, "back");
+      } else {
+        openFull();
+      }
+    });
+
+    function closeVideoModal() {
+      if (videoIframe) videoIframe.src = "";
+      videoModal?.close();
+    }
+
+    videoModal
+      ?.querySelector<HTMLButtonElement>(".vm-modal__close")
+      ?.addEventListener("click", closeVideoModal);
+    videoModal?.addEventListener("click", (event) => {
+      if (event.target === videoModal) closeVideoModal();
+    });
+    videoModal?.addEventListener("close", () => {
+      if (videoIframe) videoIframe.src = "";
+    });
+
+    photoModal
+      ?.querySelector<HTMLButtonElement>(".vm-modal__close")
+      ?.addEventListener("click", () => photoModal.close());
+    photoModal?.addEventListener("click", (event) => {
+      if (event.target === photoModal) photoModal.close();
+    });
+  }
+
+  // astro:page-load alone (not also an immediate call) covers both the
+  // initial load and every soft-navigation swap — an additional
+  // immediate call would double-bind every listener here (same
+  // astro:page-load double-init trap fixed across Header.astro/
+  // Reel.astro/TransitionOverlay.astro since Mission 04).
+  document.addEventListener("astro:page-load", initViewMaster);
+</script>

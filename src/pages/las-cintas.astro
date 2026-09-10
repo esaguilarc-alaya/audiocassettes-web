@@ -1,18 +1,24 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageAccentBar from "../components/PageAccentBar.astro";
-import Reel from "../components/Reel.astro";
+import ViewMasterShelf from "../components/ViewMasterShelf.astro";
 
 /**
- * Two placeholder reels — Mission 02 scope. Location names are
+ * Two placeholder disks — Mission 02 scope, restructured into a
+ * shelf + viewer in Mission 08
+ * (missions/MISSION_08_las-cintas-viewmaster.md). Location names,
+ * frame content, and video IDs are unchanged from Mission 02/03 —
+ * only the presentation (always-open Reel cards → a disk shelf you
+ * click into a shared viewer) changed. Location names are
  * deliberately unmistakable placeholders (Standing Rule 3), not
- * invented-but-plausible place names. Each reel mixes frame types and
- * includes at least one video frame and one photo frame. Video IDs are
- * obviously-fake placeholder strings, never a real, working video ID.
+ * invented-but-plausible place names. Each disk mixes frame types
+ * and includes at least one video frame and one photo-like frame.
+ * Video IDs are obviously-fake placeholder strings, never a real,
+ * working video ID.
  */
-const reels = [
+const disks = [
   {
-    id: "reel-1",
+    id: "disk-1",
     location: "[ubicación real aquí]",
     frames: [
       { type: "photo" as const, label: "foto 1" },
@@ -26,7 +32,7 @@ const reels = [
     ],
   },
   {
-    id: "reel-2",
+    id: "disk-2",
     location: "[ubicación real aquí #2]",
     frames: [
       { type: "art" as const, label: "arte 2" },
@@ -47,12 +53,11 @@ const reels = [
     <h1>las cintas</h1>
     <PageAccentBar />
     <p>
-      Cada cinta es una sesión — un lugar. Dale a la palanca para avanzar,
-      o tocá el lado izquierdo del visor para retroceder.
+      Cada cinta es una sesión — un lugar. Tocá un disco para cargarlo en
+      el visor: dale a la palanca para avanzar, o tocá el lado izquierdo
+      del visor para retroceder.
     </p>
-    <div class="reels-grid">
-      {reels.map((reel) => <Reel {...reel} />)}
-    </div>
+    <ViewMasterShelf disks={disks} />
   </section>
 </BaseLayout>
 
@@ -67,15 +72,5 @@ const reels = [
     max-width: 34rem;
     margin: var(--space-3) 0 var(--space-5);
     opacity: 0.85;
-  }
-
-  .reels-grid {
-    display: grid;
-    /* min(20rem, 100%) instead of a bare 20rem: a bare minimum column
-       width wider than the viewport forces horizontal overflow at
-       narrow widths (confirmed via 320/375px render — see
-       missions/MISSION_03_response.md). */
-    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
-    gap: var(--space-5);
   }
 </style>
