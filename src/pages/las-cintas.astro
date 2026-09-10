@@ -71,7 +71,11 @@ const reels = [
 
   .reels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    /* min(20rem, 100%) instead of a bare 20rem: a bare minimum column
+       width wider than the viewport forces horizontal overflow at
+       narrow widths (confirmed via 320/375px render — see
+       missions/MISSION_03_response.md). */
+    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
     gap: var(--space-5);
   }
 </style>

@@ -19,8 +19,19 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
     <a href="/" class="wordmark" aria-label="audiocassettes — inicio">
       <Isologo />
     </a>
+    <button
+      type="button"
+      class="nav-toggle"
+      aria-expanded="false"
+      aria-controls="primary-nav-list"
+      aria-label="abrir menú"
+    >
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+      <span class="nav-toggle__bar"></span>
+    </button>
     <nav aria-label="secciones principales">
-      <ul>
+      <ul id="primary-nav-list" hidden>
         {
           navLinks.map((link) => (
             <li>
@@ -57,6 +68,40 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
     text-decoration: none;
   }
 
+  .nav-toggle {
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background: transparent;
+    border: 2px solid var(--brown-tape);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .nav-toggle__bar {
+    display: block;
+    width: 1.375rem;
+    height: 2px;
+    background: var(--brown-tape);
+    transition:
+      transform 150ms ease-out,
+      opacity 150ms ease-out;
+  }
+
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bar:nth-child(2) {
+    opacity: 0;
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
   nav ul {
     list-style: none;
     display: flex;
@@ -81,4 +126,61 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
     opacity: 1;
     border-bottom-color: var(--view-master);
   }
+
+  /* Below this width, the five-link row no longer fits comfortably —
+     collapse it behind a disclosure toggle instead of relying on
+     flex-wrap alone (see missions/MISSION_03_mobile-responsive.md). */
+  @media (max-width: 50rem) {
+    .nav-toggle {
+      display: flex;
+    }
+
+    nav {
+      flex-basis: 100%;
+    }
+
+    nav ul[hidden] {
+      display: none;
+    }
+
+    nav ul {
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+      padding-top: var(--space-2);
+    }
+
+    nav li {
+      width: 100%;
+    }
+
+    nav a {
+      display: block;
+      padding: var(--space-3) 0;
+      font-size: 1rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--brown-tape) 15%, transparent);
+    }
+  }
 </style>
+
+<script>
+  function initNavToggle() {
+    const toggle = document.querySelector<HTMLButtonElement>(".nav-toggle");
+    const list = document.getElementById("primary-nav-list");
+    if (!toggle || !list) return;
+
+    toggle.addEventListener("click", () => {
+      const isOpen = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!isOpen));
+      toggle.setAttribute("aria-label", isOpen ? "abrir menú" : "cerrar menú");
+      if (isOpen) {
+        list.setAttribute("hidden", "");
+      } else {
+        list.removeAttribute("hidden");
+      }
+    });
+  }
+
+  initNavToggle();
+  document.addEventListener("astro:page-load", initNavToggle);
+</script>
