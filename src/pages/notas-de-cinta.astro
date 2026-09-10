@@ -72,6 +72,25 @@ import PageAccentBar from "../components/PageAccentBar.astro";
       </p>
       <footer class="bio-signature">— Esteban</footer>
     </div>
+
+    <section class="notas-section">
+      <h2>quiénes somos hoy</h2>
+      <ul class="lineup-list">
+        <li><strong>Gerson</strong> — bajo y teclados</li>
+        <li><strong>Cali</strong> — batería</li>
+        <li><strong>Esteban</strong> — voz y guitarra</li>
+        <li><strong>Iván</strong> — guitarra</li>
+      </ul>
+    </section>
+
+    <section class="notas-section">
+      <h2>amigos de audiocassettes</h2>
+      <p>
+        A través de los años compartimos banda con: Roberto, Alonso,
+        Vladimir, Víctor, Erick, Chris, Álvaro. Y Rolando nuestro
+        baterista en distintos periodos y nuestro amigo siempre.
+      </p>
+    </section>
   </section>
 </BaseLayout>
 
@@ -97,5 +116,42 @@ import PageAccentBar from "../components/PageAccentBar.astro";
     font-family: var(--font-display);
     font-style: italic;
     opacity: 0.7;
+  }
+
+  /* Mission 11: two new content sections after the bio, reusing the
+     bio's own max-width/line-height rather than inventing a new type
+     scale. Headings pick up the site-wide h2 treatment (display font,
+     600 weight, lowercase) from global.css automatically — this only
+     adds spacing around them. */
+  .notas-section {
+    max-width: 40rem;
+    margin-top: var(--space-6);
+  }
+
+  .notas-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-3);
+  }
+
+  .notas-section p {
+    margin: 0;
+    line-height: 1.7;
+  }
+
+  .lineup-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .lineup-list li {
+    line-height: 1.7;
+  }
+
+  .lineup-list strong {
+    font-family: var(--font-display);
   }
 </style>
