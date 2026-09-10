@@ -55,15 +55,22 @@ svg {
 
 /* -----------------------------------------------------------------
    Page-transition rewind/scrub effect — Mission 04
-   (missions/MISSION_04_rewind-transition.md).
+   (missions/MISSION_04_rewind-transition.md), keyframes replaced in
+   Mission 05 (missions/MISSION_05_rewind-transition-refinement.md).
 
    Astro's <ClientRouter /> (BaseLayout.astro) turns every full
    in-site navigation into a View Transition. This file replaces the
-   default cross-fade on the page root with a single, ~390ms beat
-   suggesting a tape rewinding: the outgoing page smears and
-   desaturates out; the incoming page flickers through a couple of
-   quick brightness/contrast jumps (a stand-in for analog scanline
-   interference) before settling.
+   default cross-fade on the page root with a single, ~320ms beat
+   suggesting a tape advancing forward: the outgoing page slides left
+   and blurs/fades out; the incoming page slides in from the right
+   (same direction, every navigation) while blurring in and settling
+   from a single brief brightness dip. Mission 04's original design
+   used a horizontal scaleX stretch on exit and a four-stop
+   blur/grayscale/brightness/contrast pulse on enter — in Esteban's
+   own words, "looks like a shake effect" with no clear direction.
+   This version keeps one consistent translateX direction on both
+   halves and a single brightness dip-then-settle (no grayscale, no
+   contrast, no scaleX) so the motion actually reads as directional.
 
    These rules live here rather than in a scoped Astro <style> block
    because ::view-transition-* pseudo-elements are rooted at the
@@ -79,53 +86,39 @@ svg {
 
 @keyframes rewind-exit {
   0% {
-    filter: blur(0) grayscale(0) brightness(1);
-    transform: scaleX(1);
+    transform: translateX(0);
+    filter: blur(0);
     opacity: 1;
   }
-  45% {
-    filter: blur(7px) grayscale(0.7) brightness(1.2);
-    transform: scaleX(1.025);
-    opacity: 0.75;
-  }
   100% {
-    filter: blur(14px) grayscale(1) brightness(0.75);
-    transform: scaleX(0.97);
+    transform: translateX(-4%);
+    filter: blur(9px);
     opacity: 0;
   }
 }
 
 @keyframes rewind-enter {
   0% {
-    filter: blur(12px) grayscale(1) brightness(1.35) contrast(1.3);
-    transform: scaleX(0.97);
+    transform: translateX(4%);
+    filter: blur(9px) brightness(0.9);
     opacity: 0;
   }
-  18% {
-    opacity: 1;
-  }
-  30% {
-    filter: blur(6px) grayscale(0.6) brightness(0.8) contrast(1.2);
-  }
-  50% {
-    filter: blur(2px) grayscale(0.3) brightness(1.1) contrast(1.1);
-  }
   100% {
-    filter: blur(0) grayscale(0) brightness(1) contrast(1);
-    transform: scaleX(1);
+    transform: translateX(0);
+    filter: blur(0) brightness(1);
     opacity: 1;
   }
 }
 
 ::view-transition-old(root) {
-  animation: rewind-exit 150ms ease-in both;
+  animation: rewind-exit 160ms ease-in both;
 }
 
 ::view-transition-new(root) {
   animation-name: rewind-enter;
-  animation-duration: 340ms;
+  animation-duration: 220ms;
   animation-timing-function: ease-out;
-  animation-delay: 50ms;
+  animation-delay: 100ms;
   animation-fill-mode: both;
 }
 
