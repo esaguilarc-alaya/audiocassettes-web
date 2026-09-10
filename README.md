@@ -64,4 +64,4 @@ This is a foundation-only scaffold (Mission 01). No real photos, video, audio, o
 
 ## License
 
-MIT — see `LICENSE`.
+All rights reserved — see `LICENSE`.

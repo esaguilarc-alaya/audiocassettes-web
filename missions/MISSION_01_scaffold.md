@@ -84,7 +84,7 @@ License for the repo: MIT (open) or all-rights-reserved (private/closed)?
 
 **Resolved during Mission 01 execution (2026-09-09):**
 
-- License: **MIT**.
+- License: **MIT** initially, changed to **all rights reserved** (Copyright © 2026 Audiocassettes) shortly after — see `LICENSE`.
 - Repo created immediately (not staged locally-only first).
 - `home-mockup-reference.html` and `Audiocassettes_Manual de Identidad.pdf` were not available at first execution, so `index.astro` was initially built from this document's section descriptions rather than ported. Both reference files were added shortly after (now committed at `reference/`) and the home page was rebuilt to actually port the mockup: exact copy, the reel-icon SVG, the las cintas cards with real place names (Río Celeste, Cerro Chirripó, Puerto Viejo) and the mockup's own `"nombre de canción"` placeholder convention, and the sintoniza footer structure. This acceptance criterion is now met against the real artifact, not a guess.
 - Diffing against the manual and mockup also caught a wrong guess: the first draft of the four-color stripe device (`Stripe.astro`) had picked polaroid-sunset/view-master/retro-pop/stereo-blue. The manual (p.21) and the mockup's own CSS both specify **brown-tape → polaroid-sunset → view-master → retro-pop**. Corrected.
