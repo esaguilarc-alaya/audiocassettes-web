@@ -431,6 +431,11 @@ const frameCopy: Record<Frame["type"], string> = {
     });
   }
 
-  initReels();
+  // See Header.astro's identical comment: `astro:page-load` alone
+  // covers both the initial load and every soft-navigation swap now
+  // that <ClientRouter /> is enabled (Mission 04) — an additional
+  // immediate call here would double-bind every reel's listeners
+  // (each play-badge would get two `showModal()` calls, the second
+  // throwing on an already-open dialog).
   document.addEventListener("astro:page-load", initReels);
 </script>

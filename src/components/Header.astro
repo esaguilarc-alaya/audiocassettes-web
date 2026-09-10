@@ -13,7 +13,7 @@ const navLinks = [
 const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 ---
 
-<header class="site-header">
+<header class="site-header" transition:name="site-header">
   <Stripe />
   <div class="site-header__row">
     <a href="/" class="wordmark" aria-label="audiocassettes — inicio">
@@ -181,6 +181,12 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
     });
   }
 
-  initNavToggle();
+  // `astro:page-load` fires once after the initial page load AND after
+  // every subsequent View Transitions swap (Mission 04 enabled
+  // <ClientRouter /> in BaseLayout.astro) — relying on it alone (rather
+  // than also calling initNavToggle() immediately) avoids double-binding
+  // a click listener to the same button on first load, which silently
+  // cancelled the toggle out (open-then-immediately-closed) once the
+  // router started dispatching that event on the initial load too.
   document.addEventListener("astro:page-load", initNavToggle);
 </script>
