@@ -11,7 +11,7 @@ The brand manual (`reference/Audiocassettes_Manual de Identidad.pdf`) and the ap
 - Star Avenue → Fredoka is the correct substitution call (the manual names Star Avenue as the corporate font, Montserrat as complementary).
 - The four-color stripe device in `src/components/Stripe.astro` is **brown-tape → polaroid-sunset → view-master → retro-pop** (confirmed from the manual's "elementos complementarios" page and the mockup's own CSS) — an earlier draft of this component had guessed a different four before the manual was available; that guess has been corrected.
 
-**Known gap, not yet built:** the brand manual's isologo (the "audiocassettes" wordmark with a concentric-circle cassette-reel icon replacing the "o", p.7–9 of the manual) is not implemented. The header currently renders a plain-text wordmark. Building the actual isologo as an SVG asset is a reasonable scope for a follow-up mission rather than this one.
+The isologo (the "audiocassettes" wordmark with a concentric-circle cassette-reel icon replacing the "o", manual p.7–9) is implemented as an inline SVG in `src/components/Isologo.astro`, used in the header. The ring colors and order (retro-pop → polaroid-sunset → view-master → brown-tape hub) match the manual's palette exactly; the letterforms are Fredoka's rather than Star Avenue's, per the substitution above.
 
 ## Project structure
 
@@ -27,6 +27,7 @@ The brand manual (`reference/Audiocassettes_Manual de Identidad.pdf`) and the ap
 │   ├── components/
 │   │   ├── Header.astro
 │   │   ├── Footer.astro          # the "sintoniza" block — real site footer, every page
+│   │   ├── Isologo.astro         # wordmark + cassette-reel icon (replaces the "o")
 │   │   ├── Stripe.astro          # four-color stripe device
 │   │   ├── Hero.astro
 │   │   ├── MusicTeaser.astro

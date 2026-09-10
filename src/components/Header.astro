@@ -1,5 +1,6 @@
 ---
 import Stripe from "./Stripe.astro";
+import Isologo from "./Isologo.astro";
 
 const navLinks = [
   { href: "/lado-a-lado-b", label: "lado a / lado b" },
@@ -15,7 +16,9 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 <header class="site-header">
   <Stripe />
   <div class="site-header__row">
-    <a href="/" class="wordmark">audiocassettes</a>
+    <a href="/" class="wordmark" aria-label="audiocassettes — inicio">
+      <Isologo />
+    </a>
     <nav aria-label="secciones principales">
       <ul>
         {

@@ -1,0 +1,82 @@
+---
+/**
+ * The "audiocassettes" isologo.
+ *
+ * Ported from reference/Audiocassettes_Manual de Identidad.pdf (p.7-10):
+ * an isologo where the wordmark and a concentric-circle icon are not
+ * recognized separately — the icon (three rings representing sound
+ * waves, around a cassette-reel hub) replaces the "o" in "audiocassettes"
+ * entirely, rather than decorating it.
+ *
+ * The manual's corporate typeface is Star Avenue; this project substitutes
+ * Fredoka pending the real font file (see README "Brand fidelity note"),
+ * so the letterforms here are Fredoka's, not Star Avenue's — flagged, not
+ * silently passed off as exact.
+ *
+ * Ring/hub colors and order match the manual's palette page exactly:
+ * retro-pop (outer) -> polaroid-sunset -> view-master -> brown-tape hub,
+ * with vintage-sky as the thin separators between bands, matching the
+ * manual's recurring ringed-circle motif (also seen on its cover and
+ * section dividers).
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const toothAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+---
+
+<span class:list={["isologo", className]}>
+  <span class="isologo__text">audi</span>
+  <svg
+    class="isologo__icon"
+    viewBox="0 0 100 100"
+    role="presentation"
+    aria-hidden="true"
+  >
+    <circle cx="50" cy="50" r="48" fill="var(--retro-pop)" />
+    <circle cx="50" cy="50" r="39" fill="var(--vintage-sky)" />
+    <circle cx="50" cy="50" r="36" fill="var(--polaroid-sunset)" />
+    <circle cx="50" cy="50" r="27" fill="var(--vintage-sky)" />
+    <circle cx="50" cy="50" r="24" fill="var(--view-master)" />
+    <circle cx="50" cy="50" r="15" fill="var(--vintage-sky)" />
+    <g fill="var(--brown-tape)">
+      <circle cx="50" cy="50" r="9" />
+      {
+        toothAngles.map((angle) => (
+          <rect
+            x="46"
+            y="35"
+            width="8"
+            height="6"
+            rx="1"
+            transform={`rotate(${angle} 50 50)`}
+          />
+        ))
+      }
+    </g>
+  </svg>
+  <span class="isologo__text">cassettes</span>
+</span>
+
+<style>
+  .isologo {
+    display: inline-flex;
+    align-items: baseline;
+    font-family: var(--font-display);
+  }
+
+  .isologo__text {
+    white-space: nowrap;
+  }
+
+  .isologo__icon {
+    width: 0.75em;
+    height: 0.75em;
+    margin-inline: -0.02em;
+    align-self: center;
+    flex-shrink: 0;
+  }
+</style>
