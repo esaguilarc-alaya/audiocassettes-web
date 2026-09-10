@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Rewind transition — with VHS play icon</title>
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --retro-pop: #4DA495;
+    --stereo-blue: #006080;
+    --dur: 900ms;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #222;
+    color: #eee;
+    padding: 24px 16px 80px;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  p.intro { opacity: .75; max-width: 640px; margin: 0 0 24px; font-size: .95rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; align-items: center; }
+  .controls label { font-size: .85rem; opacity: .8; }
+  .stage-wrap { max-width: 480px; }
+  .stage-label { font-size: .8rem; opacity: .6; margin-bottom: 8px; }
+  .stage {
+    position: relative; width: 100%; aspect-ratio: 9 / 16; max-height: 640px;
+    background: var(--vintage-sky); border-radius: 10px; overflow: hidden;
+    box-shadow: 0 0 0 3px #444;
+  }
+  .page { position: absolute; inset: 0; display: flex; flex-direction: column; color: var(--brown-tape); }
+  .page-header {
+    padding: 16px; font-weight: 700; font-size: 1.1rem;
+    border-bottom: 2px solid rgba(89,51,44,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .page-header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--view-master); }
+  .page-body { flex: 1; padding: 20px 16px; }
+  .page-body h2 { font-size: 1.4rem; margin: 0 0 10px; }
+  .page-body .bar { width: 42px; height: 4px; background: var(--retro-pop); margin-bottom: 14px; border-radius: 2px; }
+  .page-body p { font-size: .85rem; line-height: 1.5; opacity: .8; margin: 0 0 14px; }
+  .card { background: rgba(89,51,44,0.08); border: 1px dashed rgba(89,51,44,0.3); border-radius: 8px; height: 90px; margin-bottom: 10px; }
+  .page.page-a { background: var(--vintage-sky); }
+  .page.page-b { background: #fff9e0; }
+  .page.page-b .page-header .dot { background: var(--retro-pop); }
+
+  .replay { margin-top: 16px; }
+  .replay button {
+    font: inherit; font-weight: 700; font-size: .8rem;
+    padding: 8px 14px; border-radius: 6px; border: none;
+    background: var(--stereo-blue); color: var(--vintage-sky); cursor: pointer;
+  }
+
+  .page.leaving {
+    animation-name: c-exit; animation-duration: var(--dur);
+    animation-timing-function: cubic-bezier(.55,0,1,.45);
+    animation-fill-mode: forwards; z-index: 2;
+  }
+  .page.entering {
+    animation-name: c-enter; animation-duration: var(--dur);
+    animation-delay: calc(var(--dur) * 0.12);
+    animation-timing-function: cubic-bezier(0,.55,.45,1);
+    animation-fill-mode: both; z-index: 3;
+  }
+  @keyframes c-exit {
+    from { transform: translateX(0) scaleX(1); filter: blur(0); opacity: 1; }
+    to   { transform: translateX(-60%) scaleX(1.4); filter: blur(16px); opacity: 0; }
+  }
+  @keyframes c-enter {
+    from { transform: translateX(60%) scaleX(1.4); filter: blur(16px); opacity: 0; }
+    to   { transform: translateX(0) scaleX(1); filter: blur(0); opacity: 1; }
+  }
+  .streaks {
+    position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
+    background: repeating-linear-gradient(100deg, transparent 0 18px, rgba(255,255,255,0.55) 18px 20px);
+  }
+  .stage.playing .streaks { animation: c-streak var(--dur) ease-out forwards; }
+  @keyframes c-streak {
+    0% { opacity: 0; background-position-x: 0; }
+    35% { opacity: .9; }
+    100% { opacity: 0; background-position-x: -300px; }
+  }
+
+  /* VHS-style "PLAY" OSD — white triangle + label, top-right, classic camcorder look */
+  .play-osd {
+    position: absolute;
+    top: 14px; right: 14px;
+    z-index: 6;
+    display: flex; align-items: center; gap: 6px;
+    opacity: 0;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: .9rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6), 1px 1px 0 rgba(0,0,0,0.9);
+  }
+  .play-osd svg {
+    width: 16px; height: 16px;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.9)) drop-shadow(0 0 5px rgba(0,0,0,0.6));
+  }
+  .stage.playing .play-osd {
+    animation: play-osd-fade calc(var(--dur) + 900ms) ease-out forwards;
+  }
+  @keyframes play-osd-fade {
+    0%   { opacity: 0; transform: translateY(-2px); }
+    18%  { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Rewind streak (900ms) + VHS "▶ PLAY" corner OSD</h1>
+<p class="intro">The white play triangle + label appears top-right as the new page settles in, lingers briefly, then fades — like a camcorder's on-screen display confirming playback resumed. Streak duration fixed at 900ms per your last note.</p>
+
+<div class="stage-wrap">
+  <div class="stage-label">preview</div>
+  <div class="stage" id="stage">
+    <div class="page page-a" id="pageA">
+      <div class="page-header"><span>las cintas</span><span class="dot"></span></div>
+      <div class="page-body">
+        <h2>las cintas</h2>
+        <div class="bar"></div>
+        <p>cada cinta es una sesión — un lugar.</p>
+        <div class="card"></div>
+        <div class="card"></div>
+      </div>
+    </div>
+    <div class="page page-b" id="pageB" style="display:none;">
+      <div class="page-header"><span>notas de cinta</span><span class="dot"></span></div>
+      <div class="page-body">
+        <h2>notas de cinta</h2>
+        <div class="bar"></div>
+        <p>contenido real de esta sección — misión tbd.</p>
+        <div class="card"></div>
+        <div class="card"></div>
+      </div>
+    </div>
+    <div class="streaks"></div>
+    <div class="play-osd">
+      <svg viewBox="0 0 24 24" fill="white"><polygon points="5,3 21,12 5,21"/></svg>
+      <span>PLAY</span>
+    </div>
+  </div>
+  <div class="replay">
+    <button id="playBtn">▶ play transition</button>
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const pageA = document.getElementById('pageA');
+  const pageB = document.getElementById('pageB');
+  const playBtn = document.getElementById('playBtn');
+  let showingA = true;
+
+  function play() {
+    const from = showingA ? pageA : pageB;
+    const to = showingA ? pageB : pageA;
+    to.style.display = 'flex';
+    from.classList.remove('leaving'); to.classList.remove('entering');
+    void stage.offsetWidth;
+    stage.classList.remove('playing'); void stage.offsetWidth; stage.classList.add('playing');
+    from.classList.add('leaving');
+    to.classList.add('entering');
+    setTimeout(() => {
+      from.style.display = 'none';
+      from.classList.remove('leaving');
+      to.classList.remove('entering');
+      showingA = !showingA;
+    }, 960);
+    setTimeout(() => { stage.classList.remove('playing'); }, 1900);
+  }
+
+  playBtn.addEventListener('click', play);
+</script>
+
+</body>
+</html>
