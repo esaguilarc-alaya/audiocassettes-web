@@ -7,7 +7,71 @@ import PageAccentBar from "../components/PageAccentBar.astro";
   <section class="stub" style="--page-accent: var(--polaroid-sunset);">
     <h1>notas de cinta</h1>
     <PageAccentBar />
-    <p>[ contenido real de esta sección — Misión TBD ]</p>
+    <div class="bio">
+      <p>
+        En 1987 Ronald Reagan hacía de las suyas como presidente de Estados
+        Unidos, Óscar Arias celebraba su Nobel de la Paz, mientras miles de
+        costarricenses perdieron sus ahorros de la noche a la mañana con la
+        quiebra masiva de empresas financieras no bancarias... esa parte sí
+        suena muy 2026.
+      </p>
+      <p>
+        Pero bueno, los teléfonos tenían 6 dígitos y pocos hogares contaban
+        con teléfono propio — eso sí cambió.
+      </p>
+      <p>
+        La cosa es que ese año conocí a Gerson entrando a primer grado de
+        escuela. Ya para sexto grado éramos mejores amigos, y a los 13 años
+        decidimos tener nuestra banda de rock — el único problema es que no
+        sabíamos tocar ningún instrumento...
+      </p>
+      <p>
+        Así que bueno, lo resolvimos llevando clases de guitarra los dos a
+        la vez.
+      </p>
+      <p>
+        Pronto empezamos a crear nuestras propias canciones, letras. Mucho
+        de ese material lo tenemos guardado, en cassettes, en cuadernos
+        viejos, y muy a pesar de la juventud todavía encontramos sabiduría
+        ahí.
+      </p>
+      <p>
+        En nuestra época de colegio compartimos con más personas ese
+        interés, y de ahí conocimos gente con la que de una u otra forma
+        hemos compartido por el resto de nuestra vida.
+      </p>
+      <p>
+        Grabamos nuestras primeras canciones en estudio con Iván en la
+        guitarra y nuestro amigo y miembro honorario por siempre, Rolando,
+        en la batería.
+      </p>
+      <p>
+        En los últimos 20 años grabamos dos discos en estudio que todavía
+        no han sido oficialmente lanzados.
+      </p>
+      <p>
+        Tuvimos la oportunidad de conocer gran cantidad de músicos locales,
+        de los conocidos de la escena y de los desconocidos.
+      </p>
+      <p>
+        Compartimos banda con muchos nombres que solo voy a mencionar sin
+        apellido: Roberto, Alonso, Vladimir, Víctor, Erick, Chris,
+        Álvaro... algunos de ellos todavía en nuestra vida. Con todos nos
+        divertimos y compartimos el momento íntimo de crear, y por eso
+        eternamente agradecidos.
+      </p>
+      <p>
+        Hoy volvemos con una agrupación de viejos conocidos como Iván, una
+        dulzura de hombre, y un nuevo amigo que nos devolvió las ganas y la
+        paz: nuestro querido Cali.
+      </p>
+      <p>
+        Y así nos disponemos a empezar esta gira y finalmente compartir lo
+        que hemos creado durante tanto tiempo y con tantas personas lindas.
+        Gracias por estar por acá, nos vemos por ahí.
+      </p>
+      <footer class="bio-signature">— Esteban</footer>
+    </div>
   </section>
 </BaseLayout>
 
@@ -16,5 +80,22 @@ import PageAccentBar from "../components/PageAccentBar.astro";
     max-width: 72rem;
     margin: 0 auto;
     padding: var(--space-6) var(--space-4);
+  }
+
+  .bio {
+    max-width: 40rem;
+    margin-top: var(--space-4);
+  }
+
+  .bio p {
+    margin: 0 0 var(--space-4);
+    line-height: 1.7;
+  }
+
+  .bio-signature {
+    margin-top: var(--space-3);
+    font-family: var(--font-display);
+    font-style: italic;
+    opacity: 0.7;
   }
 </style>
