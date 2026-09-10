@@ -56,21 +56,28 @@ svg {
 /* -----------------------------------------------------------------
    Page-transition rewind/scrub effect — Mission 04
    (missions/MISSION_04_rewind-transition.md), keyframes replaced in
-   Mission 05 (missions/MISSION_05_rewind-transition-refinement.md).
+   Mission 05 (missions/MISSION_05_rewind-transition-refinement.md),
+   replaced again in Mission 06 (final approved design, ported
+   1:1 from reference/rewind-transition-reference.html) —
+   missions/MISSION_06_rewind-transition-final.md.
 
    Astro's <ClientRouter /> (BaseLayout.astro) turns every full
-   in-site navigation into a View Transition. This file replaces the
-   default cross-fade on the page root with a single, ~320ms beat
-   suggesting a tape advancing forward: the outgoing page slides left
-   and blurs/fades out; the incoming page slides in from the right
-   (same direction, every navigation) while blurring in and settling
-   from a single brief brightness dip. Mission 04's original design
-   used a horizontal scaleX stretch on exit and a four-stop
-   blur/grayscale/brightness/contrast pulse on enter — in Esteban's
-   own words, "looks like a shake effect" with no clear direction.
-   This version keeps one consistent translateX direction on both
-   halves and a single brightness dip-then-settle (no grayscale, no
-   contrast, no scaleX) so the motion actually reads as directional.
+   in-site navigation into a View Transition. This is the 900ms
+   "fast-rewind streak": the outgoing page stretches/smears off to
+   one side (scaleX(1.4), translateX(-60%), blur(16px), fading out)
+   with cubic-bezier(.55,0,1,.45); the incoming page mirrors it,
+   entering from the opposite side with cubic-bezier(0,.55,.45,1),
+   starting 12% of the duration after the exit begins so the two
+   overlap slightly — exact values from the approved reference, not
+   reinterpreted.
+
+   The light-streak sweep and "▶ PLAY" OSD are a separate real-DOM
+   overlay (TransitionOverlay.astro, rendered once in BaseLayout.astro)
+   with their own animation/trigger logic, not part of this file —
+   see that component for why (they need to outlive this 900ms motion
+   and can't reliably render as ::view-transition pseudo-elements
+   alongside root; documented there and in
+   missions/MISSION_06_response.md).
 
    These rules live here rather than in a scoped Astro <style> block
    because ::view-transition-* pseudo-elements are rooted at the
@@ -82,50 +89,52 @@ svg {
    under `@media (prefers-reduced-motion)`, so reduced-motion users
    get an instant cut for free — nothing extra to write here, and
    nothing here can override that !important rule even by accident.
+   (The streak/OSD overlay's own reduced-motion handling lives in
+   TransitionOverlay.astro, since it isn't a pseudo-element.)
    ----------------------------------------------------------------- */
 
 @keyframes rewind-exit {
-  0% {
-    transform: translateX(0);
+  from {
+    transform: translateX(0) scaleX(1);
     filter: blur(0);
     opacity: 1;
   }
-  100% {
-    transform: translateX(-4%);
-    filter: blur(9px);
+  to {
+    transform: translateX(-60%) scaleX(1.4);
+    filter: blur(16px);
     opacity: 0;
   }
 }
 
 @keyframes rewind-enter {
-  0% {
-    transform: translateX(4%);
-    filter: blur(9px) brightness(0.9);
+  from {
+    transform: translateX(60%) scaleX(1.4);
+    filter: blur(16px);
     opacity: 0;
   }
-  100% {
-    transform: translateX(0);
-    filter: blur(0) brightness(1);
+  to {
+    transform: translateX(0) scaleX(1);
+    filter: blur(0);
     opacity: 1;
   }
 }
 
 ::view-transition-old(root) {
-  animation: rewind-exit 160ms ease-in both;
+  animation: rewind-exit 900ms cubic-bezier(0.55, 0, 1, 0.45) both;
 }
 
 ::view-transition-new(root) {
   animation-name: rewind-enter;
-  animation-duration: 220ms;
-  animation-timing-function: ease-out;
-  animation-delay: 100ms;
+  animation-duration: 900ms;
+  animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1);
+  animation-delay: 108ms; /* 900ms * 0.12, per the reference */
   animation-fill-mode: both;
 }
 
-/* The header carries its own named transition group (Header.astro,
-   transition:name="site-header") specifically so it can be excluded
-   from the rewind treatment above and stay visually stable — the one
-   part of the screen that doesn't feel like it's "on the tape". */
+/* The header carries its own named transition group
+   (Header.astro's transition:name="site-header") so it can be
+   excluded from the rewind treatment above and stay visually
+   stable — it shouldn't feel like it's "on the tape". */
 ::view-transition-old(site-header),
 ::view-transition-new(site-header) {
   animation: none;

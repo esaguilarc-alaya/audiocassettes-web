@@ -1,0 +1,161 @@
+---
+/**
+ * Page-transition FX overlay — Mission 06
+ * (missions/MISSION_06_rewind-transition-final.md), porting
+ * reference/rewind-transition-reference.html's `.streaks` and
+ * `.play-osd` elements onto the real site.
+ *
+ * Real DOM elements, not ::view-transition-* pseudo-elements: the
+ * OSD needs an SVG + text and needs to outlive the page-root motion
+ * (holds until 1800ms vs. the 900ms streak), which a view-transition
+ * pseudo-element can't do (see missions/MISSION_06_response.md for
+ * the investigation this ruled out participation with).
+ *
+ * Triggered by hooking the ViewTransition object's own `.finished`
+ * promise (captured by wrapping document.startViewTransition once —
+ * guarded so the wrap only happens once, ever, regardless of how
+ * many times this script re-runs across soft navigations) rather
+ * than astro:after-swap: `.finished` resolves once the browser has
+ * torn down the transition's pseudo-element tree and live rendering
+ * has resumed for the whole page — the correct, race-free moment to
+ * start a real DOM animation on top of it.
+ */
+---
+
+<div class="tfx-streak" aria-hidden="true"></div>
+<div class="tfx-osd" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="white"><polygon points="5,3 21,12 5,21"></polygon></svg>
+  <span>PLAY</span>
+</div>
+
+<style>
+  .tfx-streak {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    opacity: 0;
+    background: repeating-linear-gradient(
+      100deg,
+      transparent 0 18px,
+      rgba(255, 255, 255, 0.55) 18px 20px
+    );
+  }
+
+  .tfx-streak.is-playing {
+    animation: tfx-streak 900ms ease-out forwards;
+  }
+
+  @keyframes tfx-streak {
+    0% {
+      opacity: 0;
+      background-position-x: 0;
+    }
+    35% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+      background-position-x: -300px;
+    }
+  }
+
+  /* VHS-style "PLAY" OSD — white triangle + label, top-right, ported
+     from reference/rewind-transition-reference.html's .play-osd.
+     White + dark drop-shadow is a deliberate non-brand-token choice
+     (needs to read against any page's background), recorded here per
+     Rule 1. */
+  .tfx-osd {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    pointer-events: none;
+    color: #fff;
+    font-family: "Courier New", monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-shadow:
+      0 0 3px rgba(0, 0, 0, 0.9),
+      0 0 8px rgba(0, 0, 0, 0.6),
+      1px 1px 0 rgba(0, 0, 0, 0.9);
+  }
+
+  .tfx-osd svg {
+    width: 16px;
+    height: 16px;
+    filter:
+      drop-shadow(0 0 2px rgba(0, 0, 0, 0.9))
+      drop-shadow(0 0 5px rgba(0, 0, 0, 0.6));
+  }
+
+  .tfx-osd.is-playing {
+    /* 900ms streak + 900ms hold/fade, per the reference's
+       calc(var(--dur) + 900ms). */
+    animation: tfx-osd-fade 1800ms ease-out forwards;
+  }
+
+  @keyframes tfx-osd-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+    18% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* Motion/attention effects, not just the page-root blur — must not
+     appear under reduced motion either (Astro's own !important rule
+     in viewtransitions.css only covers ::view-transition-* pseudo-
+     elements and [data-astro-transition-scope], not these). */
+  @media (prefers-reduced-motion: reduce) {
+    .tfx-streak,
+    .tfx-osd {
+      animation: none !important;
+      opacity: 0 !important;
+    }
+  }
+</style>
+
+<script>
+  function playTransitionFx() {
+    document.querySelectorAll<HTMLElement>(".tfx-streak, .tfx-osd").forEach((el) => {
+      el.classList.remove("is-playing");
+      void el.offsetWidth;
+      el.classList.add("is-playing");
+    });
+  }
+
+  // Wrap document.startViewTransition exactly once (guarded on window,
+  // since this script can re-run across soft navigations) so we can
+  // hook the *specific* ViewTransition's own .finished promise — the
+  // moment the browser has torn down the transition and resumed live
+  // rendering for the whole page. That's the correct, race-free time
+  // to start a real DOM animation on top of the settled page; trying
+  // to render live content *during* the transition does not work
+  // reliably (see missions/MISSION_06_response.md).
+  if (!(window as any).__tfxPatched) {
+    (window as any).__tfxPatched = true;
+    const orig = document.startViewTransition?.bind(document);
+    if (orig) {
+      document.startViewTransition = ((updateCallback?: () => void | Promise<void>) => {
+        const vt = orig(updateCallback);
+        vt.finished.then(playTransitionFx).catch(() => {});
+        return vt;
+      }) as typeof document.startViewTransition;
+    }
+  }
+</script>
