@@ -1,0 +1,64 @@
+---
+/**
+ * "las cintas" preview grid — home page.
+ * Placeholder cards only; no invented song/release titles presented
+ * as real (Mission 01 placeholder discipline).
+ */
+const placeholderCintas = [
+  { label: "cinta 01" },
+  { label: "cinta 02" },
+  { label: "cinta 03" },
+];
+---
+
+<section class="cintas-preview">
+  <h2>las cintas</h2>
+  <p>[ descripción real de la colección de cintas aquí ]</p>
+  <div class="cintas-preview__grid">
+    {
+      placeholderCintas.map((cinta) => (
+        <div class="placeholder-block cintas-preview__card">
+          <span>[ {cinta.label} — arte/título real aquí ]</span>
+        </div>
+      ))
+    }
+  </div>
+  <a class="cintas-preview__link" href="/las-cintas">ver todas las cintas</a>
+</section>
+
+<style>
+  .cintas-preview {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .cintas-preview h2 {
+    color: var(--polaroid-sunset);
+    font-size: 2rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .cintas-preview__grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    margin-block: var(--space-4);
+  }
+
+  .cintas-preview__card {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cintas-preview__link {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--polaroid-sunset);
+    border-bottom: 2px solid var(--polaroid-sunset);
+  }
+</style>

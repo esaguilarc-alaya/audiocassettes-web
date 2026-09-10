@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import EmailSignupForm from "../components/EmailSignupForm.astro";
+---
+
+<BaseLayout title="sintoniza">
+  <section class="stub">
+    <h1>sintoniza</h1>
+    <p>
+      encuesta/votación — Misión TBD. Esta sección es solo un stub estático;
+      el formulario abajo no tiene backend todavía.
+    </p>
+    <EmailSignupForm />
+  </section>
+</BaseLayout>
+
+<style>
+  .stub {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .stub p {
+    max-width: 40rem;
+    margin-bottom: var(--space-4);
+  }
+</style>

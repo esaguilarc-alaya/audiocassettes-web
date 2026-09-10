@@ -1,0 +1,36 @@
+---
+/**
+ * Four-color stripe device.
+ *
+ * Mission 01 specifies a "four-color stripe device" but does not name
+ * which four of the six brand tokens make it up. Pending the brand
+ * manual, this uses the four higher-saturation tokens (leaving
+ * --brown-tape and --vintage-sky as text/background colors rather than
+ * stripe colors) — a placeholder decision, not a brand-manual fact.
+ * Flag for revisit once the brand manual is in the repo.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={["stripe", className]} role="presentation" aria-hidden="true">
+  <span class="stripe__band" style="background: var(--polaroid-sunset);"></span>
+  <span class="stripe__band" style="background: var(--view-master);"></span>
+  <span class="stripe__band" style="background: var(--retro-pop);"></span>
+  <span class="stripe__band" style="background: var(--stereo-blue);"></span>
+</div>
+
+<style>
+  .stripe {
+    display: flex;
+    width: 100%;
+    height: 0.5rem;
+  }
+
+  .stripe__band {
+    flex: 1 1 0;
+  }
+</style>

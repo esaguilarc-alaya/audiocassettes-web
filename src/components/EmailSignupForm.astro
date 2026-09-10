@@ -1,0 +1,71 @@
+---
+/**
+ * Non-functional email signup UI.
+ * No backend wiring, no API route — form does not submit anywhere.
+ * See missions/MISSION_01_scaffold.md (out of scope: backend for sintoniza).
+ */
+---
+
+<form class="signup-form" onsubmit="return false;">
+  <label for="signup-email">tu correo</label>
+  <div class="signup-form__row">
+    <input
+      id="signup-email"
+      type="email"
+      name="email"
+      placeholder="tu@correo.com"
+      disabled
+    />
+    <button type="submit" disabled>enterarme</button>
+  </div>
+  <p class="signup-form__note">[ formulario no funcional — sin backend aún ]</p>
+</form>
+
+<style>
+  .signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-width: 28rem;
+  }
+
+  .signup-form label {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: lowercase;
+  }
+
+  .signup-form__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .signup-form input {
+    flex: 1 1 12rem;
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--brown-tape);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 1rem;
+  }
+
+  .signup-form button {
+    padding: var(--space-2) var(--space-4);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--view-master);
+    color: var(--vintage-sky);
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-transform: lowercase;
+    cursor: not-allowed;
+  }
+
+  .signup-form__note {
+    margin: 0;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+</style>

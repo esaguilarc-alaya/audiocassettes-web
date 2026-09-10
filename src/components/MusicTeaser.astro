@@ -1,0 +1,42 @@
+---
+/**
+ * Music teaser block — home page.
+ * No real song audio/titles per Mission 01 scope-out; placeholders only.
+ */
+---
+
+<section class="music-teaser">
+  <h2>lado a / lado b</h2>
+  <p>[ descripción real del proyecto musical aquí ]</p>
+  <div class="placeholder-block music-teaser__player">
+    [ reproductor / audio real aquí — sin canciones reales en esta etapa ]
+  </div>
+  <a class="music-teaser__link" href="/lado-a-lado-b">escuchar más</a>
+</section>
+
+<style>
+  .music-teaser {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .music-teaser h2 {
+    color: var(--stereo-blue);
+    font-size: 2rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .music-teaser__player {
+    margin-block: var(--space-4);
+  }
+
+  .music-teaser__link {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--view-master);
+    border-bottom: 2px solid var(--view-master);
+  }
+</style>

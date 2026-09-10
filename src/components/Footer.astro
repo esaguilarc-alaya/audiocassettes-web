@@ -1,0 +1,61 @@
+---
+import Stripe from "./Stripe.astro";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="site-footer__row">
+    <p>&copy; {year} audiocassettes</p>
+    <nav aria-label="secciones (pie de página)">
+      <ul>
+        <li><a href="/lado-a-lado-b">lado a / lado b</a></li>
+        <li><a href="/las-cintas">las cintas</a></li>
+        <li><a href="/notas-de-cinta">notas de cinta</a></li>
+        <li><a href="/el-estuche">el estuche</a></li>
+        <li><a href="/sintoniza">sintoniza</a></li>
+      </ul>
+    </nav>
+  </div>
+  <Stripe />
+</footer>
+
+<style>
+  .site-footer__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+  }
+
+  .site-footer__row p {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+  }
+
+  nav a {
+    color: var(--vintage-sky);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: var(--font-body);
+    text-transform: lowercase;
+  }
+
+  nav a:hover {
+    text-decoration: underline;
+  }
+</style>

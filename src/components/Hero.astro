@@ -1,0 +1,51 @@
+---
+/**
+ * Home hero section.
+ * Built from the Mission 01 spec description only (no approved mockup
+ * was available for this pass) — first draft for review, not a port.
+ */
+---
+
+<section class="hero">
+  <div class="hero__copy">
+    <h1>audiocassettes</h1>
+    <p class="hero__tagline">[ tagline/slogan real de la banda aquí ]</p>
+  </div>
+  <div class="placeholder-block hero__art">
+    [ foto/video real de la banda aquí ]
+  </div>
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-6) var(--space-4);
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 48rem) {
+    .hero {
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+    }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    color: var(--view-master);
+  }
+
+  .hero__tagline {
+    font-size: 1.1rem;
+    max-width: 32rem;
+  }
+
+  .hero__art {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>

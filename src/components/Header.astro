@@ -1,0 +1,79 @@
+---
+import Stripe from "./Stripe.astro";
+
+const navLinks = [
+  { href: "/lado-a-lado-b", label: "lado a / lado b" },
+  { href: "/las-cintas", label: "las cintas" },
+  { href: "/notas-de-cinta", label: "notas de cinta" },
+  { href: "/el-estuche", label: "el estuche" },
+  { href: "/sintoniza", label: "sintoniza" },
+];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+---
+
+<header class="site-header">
+  <Stripe />
+  <div class="site-header__row">
+    <a href="/" class="wordmark">audiocassettes</a>
+    <nav aria-label="secciones principales">
+      <ul>
+        {
+          navLinks.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={currentPath === link.href ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4);
+    background: var(--brown-tape);
+  }
+
+  .wordmark {
+    color: var(--vintage-sky);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+
+  nav a {
+    color: var(--vintage-sky);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding-block: var(--space-1);
+    border-bottom: 2px solid transparent;
+  }
+
+  nav a:hover,
+  nav a[aria-current="page"] {
+    border-bottom-color: var(--polaroid-sunset);
+  }
+</style>
