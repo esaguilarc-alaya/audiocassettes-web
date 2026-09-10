@@ -1,10 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageAccentBar from "../components/PageAccentBar.astro";
 ---
 
 <BaseLayout title="lado a / lado b">
-  <section class="stub">
+  <section class="stub" style="--page-accent: var(--view-master);">
     <h1>lado a / lado b</h1>
+    <PageAccentBar />
     <p>[ contenido real de esta sección — Misión TBD ]</p>
   </section>
 </BaseLayout>

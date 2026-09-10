@@ -1,10 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageAccentBar from "../components/PageAccentBar.astro";
 ---
 
 <BaseLayout title="notas de cinta">
-  <section class="stub">
+  <section class="stub" style="--page-accent: var(--polaroid-sunset);">
     <h1>notas de cinta</h1>
+    <PageAccentBar />
     <p>[ contenido real de esta sección — Misión TBD ]</p>
   </section>
 </BaseLayout>

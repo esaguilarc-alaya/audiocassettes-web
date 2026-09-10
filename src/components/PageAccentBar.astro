@@ -1,0 +1,25 @@
+---
+/**
+ * Per-page accent-rule bar — Mission 02.
+ *
+ * Renders a single short bar driven entirely by the `--page-accent`
+ * custom property. That property is NOT set here — the page using this
+ * component is responsible for setting `--page-accent` on its own
+ * wrapping element (inline style), so the color never leaks to other
+ * pages or to any other element (nav, buttons, cards) on the same page.
+ *
+ * See missions/MISSION_02_hero-accent-reel.md, Scope (in) #2.
+ */
+---
+
+<div class="page-accent-bar" aria-hidden="true"></div>
+
+<style>
+  .page-accent-bar {
+    width: 3rem;
+    height: 0.25rem;
+    margin: var(--space-2) 0 0;
+    background: var(--page-accent);
+    border-radius: var(--radius-sm);
+  }
+</style>

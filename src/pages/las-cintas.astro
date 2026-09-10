@@ -1,11 +1,58 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageAccentBar from "../components/PageAccentBar.astro";
+import Reel from "../components/Reel.astro";
+
+/**
+ * Two placeholder reels — Mission 02 scope. Location names are
+ * deliberately unmistakable placeholders (Standing Rule 3), not
+ * invented-but-plausible place names. Each reel mixes frame types and
+ * includes at least one video frame and one photo frame. Video IDs are
+ * obviously-fake placeholder strings, never a real, working video ID.
+ */
+const reels = [
+  {
+    id: "reel-1",
+    location: "[ubicación real aquí]",
+    frames: [
+      { type: "photo" as const, label: "foto 1" },
+      {
+        type: "video" as const,
+        label: "video 1",
+        videoId: "PLACEHOLDER_VIDEO_ID_1",
+      },
+      { type: "band-photo" as const, label: "foto de banda 1" },
+      { type: "art" as const, label: "arte 1" },
+    ],
+  },
+  {
+    id: "reel-2",
+    location: "[ubicación real aquí #2]",
+    frames: [
+      { type: "art" as const, label: "arte 2" },
+      { type: "photo" as const, label: "foto 2" },
+      {
+        type: "video" as const,
+        label: "video 2",
+        videoId: "PLACEHOLDER_VIDEO_ID_2",
+      },
+      { type: "band-photo" as const, label: "foto de banda 2" },
+    ],
+  },
+];
 ---
 
 <BaseLayout title="las cintas">
-  <section class="stub">
+  <section class="stub" style="--page-accent: var(--retro-pop);">
     <h1>las cintas</h1>
-    <p>[ contenido real de esta sección — Misión TBD ]</p>
+    <PageAccentBar />
+    <p>
+      Cada cinta es una sesión — un lugar. Dale a la palanca para avanzar,
+      o tocá el lado izquierdo del visor para retroceder.
+    </p>
+    <div class="reels-grid">
+      {reels.map((reel) => <Reel {...reel} />)}
+    </div>
   </section>
 </BaseLayout>
 
@@ -14,5 +61,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     max-width: 72rem;
     margin: 0 auto;
     padding: var(--space-6) var(--space-4);
+  }
+
+  .stub > p {
+    max-width: 34rem;
+    margin: var(--space-3) 0 var(--space-5);
+    opacity: 0.85;
+  }
+
+  .reels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: var(--space-5);
   }
 </style>

@@ -1,10 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageAccentBar from "../components/PageAccentBar.astro";
 ---
 
 <BaseLayout title="el estuche">
-  <section class="stub">
+  <section class="stub" style="--page-accent: var(--brown-tape);">
     <h1>el estuche</h1>
+    <PageAccentBar />
     <p>[ contenido real de esta sección — Misión TBD ]</p>
   </section>
 </BaseLayout>
