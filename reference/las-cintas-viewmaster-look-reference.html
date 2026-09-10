@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>las cintas — real View-Master look</title>
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --retro-pop: #4DA495;
+    --stereo-blue: #006080;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #1a1a1a;
+    color: #eee;
+    padding: 24px 16px 80px;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  p.intro { opacity: .7; max-width: 640px; margin: 0 0 28px; font-size: .9rem; line-height: 1.5; }
+  .stage { position: relative; max-width: 760px; }
+
+  /* ---------------- Shelf: authentic-looking reels ---------------- */
+  .shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 32px; }
+  .disk-slot { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+
+  .reel {
+    width: 170px; height: 170px; border-radius: 50%;
+    position: relative;
+    background: var(--vintage-sky);
+    box-shadow: 0 6px 16px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.15);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .disk-slot:hover .reel { transform: scale(1.05) rotate(4deg); }
+
+  /* ring of picture-window frames — the real reel trait.
+     IMPORTANT: no counter-rotation here. Each window rotates BY its
+     position angle (fan/pinwheel), same as a real disc — that's what
+     makes them "face" progressively different directions around the
+     ring instead of all staying upright. */
+  .reel .frame-window {
+    position: absolute;
+    width: 24px; height: 18px;
+    background: var(--frame-color, var(--view-master));
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.35);
+    left: 50%; top: 50%;
+    transform-origin: center;
+  }
+  .reel .frame-window:nth-child(1) { transform: translate(-50%,-50%) rotate(0deg) translateY(-62px); }
+  .reel .frame-window:nth-child(2) { transform: translate(-50%,-50%) rotate(51.4deg) translateY(-62px); }
+  .reel .frame-window:nth-child(3) { transform: translate(-50%,-50%) rotate(102.8deg) translateY(-62px); }
+  .reel .frame-window:nth-child(4) { transform: translate(-50%,-50%) rotate(154.2deg) translateY(-62px); }
+  .reel .frame-window:nth-child(5) { transform: translate(-50%,-50%) rotate(205.6deg) translateY(-62px); }
+  .reel .frame-window:nth-child(6) { transform: translate(-50%,-50%) rotate(257deg) translateY(-62px); }
+  .reel .frame-window:nth-child(7) { transform: translate(-50%,-50%) rotate(308.4deg) translateY(-62px); }
+
+  /* small punched notches at the rim — no radiating lines across the face */
+  .reel .rim-notch {
+    position: absolute; left: 50%; top: 50%;
+    width: 8px; height: 10px;
+    background: #1a1a1a;
+    left: 50%; top: 50%;
+    transform-origin: center;
+  }
+  .reel .rim-notch:nth-child(8) { transform: translate(-50%,-50%) rotate(25.7deg) translateY(-83px); }
+  .reel .rim-notch:nth-child(9) { transform: translate(-50%,-50%) rotate(77.1deg) translateY(-83px); }
+  .reel .rim-notch:nth-child(10) { transform: translate(-50%,-50%) rotate(128.5deg) translateY(-83px); }
+  .reel .rim-notch:nth-child(11) { transform: translate(-50%,-50%) rotate(180deg) translateY(-83px); }
+  .reel .rim-notch:nth-child(12) { transform: translate(-50%,-50%) rotate(231.3deg) translateY(-83px); }
+  .reel .rim-notch:nth-child(13) { transform: translate(-50%,-50%) rotate(282.7deg) translateY(-83px); }
+  .reel .rim-notch:nth-child(14) { transform: translate(-50%,-50%) rotate(334.1deg) translateY(-83px); }
+
+  .reel .center-hub {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 108px; height: 108px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px;
+    z-index: 3;
+    text-align: center;
+  }
+  .reel .center-hub .up-mark {
+    font-size: .6rem; color: var(--brown-tape); opacity: .55; line-height: 1;
+  }
+  .reel .center-hub .hole {
+    width: 10px; height: 10px; border-radius: 50%; background: #1a1a1a;
+    margin: 3px 0 5px;
+  }
+  .reel .center-hub .disc-title {
+    font-weight: 700; font-size: .72rem; color: var(--brown-tape);
+    line-height: 1.15; max-width: 90px;
+  }
+  .reel .center-hub .disc-sub {
+    font-size: .58rem; color: var(--brown-tape); opacity: .6; margin-top: 2px;
+  }
+
+  .disk-sub-caption { margin-top: 12px; font-size: .78rem; opacity: .6; color: var(--vintage-sky); text-align: center; }
+
+  /* ---------------- Viewer: real silhouette + side lever ---------------- */
+  .viewer-wrap {
+    position: absolute; inset: 0; opacity: 0; pointer-events: none; transform: scale(.9);
+    transition: opacity .35s ease, transform .35s cubic-bezier(.2,.8,.2,1);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .viewer-wrap.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+
+  .close-btn {
+    align-self: flex-end; margin: 0 0 10px;
+    background: none; border: 1px solid rgba(255,253,199,.4); color: var(--vintage-sky);
+    border-radius: 6px; padding: 5px 10px; font-size: .78rem; font-weight: 700; cursor: pointer;
+  }
+  .viewer-title { color: var(--vintage-sky); font-weight: 700; margin-bottom: 10px; }
+
+  .viewmaster {
+    position: relative;
+    width: min(360px, 88vw);
+  }
+  /* the classic V-M silhouette: wide top housing (eyepieces) narrowing to a
+     lower body, done with two stacked shapes */
+  .vm-top {
+    width: 100%; height: 92px;
+    background: var(--view-master);
+    border-radius: 30px 30px 50px 50px / 30px 30px 40px 40px;
+    position: relative;
+    box-shadow: 0 8px 20px rgba(0,0,0,.5);
+  }
+  .vm-eyecups {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 14px;
+  }
+  .vm-eyecups span {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: #2b1210;
+    box-shadow: inset 0 0 0 5px rgba(0,0,0,.4), 0 2px 4px rgba(0,0,0,.3);
+  }
+  .vm-body {
+    width: 88%; margin: -18px auto 0; height: 150px;
+    background: var(--brown-tape);
+    border-radius: 0 0 22px 22px;
+    position: relative;
+    box-shadow: 0 10px 24px rgba(0,0,0,.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .screen-window {
+    width: 74%; aspect-ratio: 4/3;
+    border-radius: 999px / 40%;
+    background: #0e0e0e;
+    box-shadow: inset 0 0 0 6px #3a221c, inset 0 0 22px rgba(0,0,0,.85);
+    overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .preview-frame {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px; color: var(--vintage-sky);
+    cursor: zoom-in;
+  }
+  .preview-frame .swatch {
+    width: 76%; aspect-ratio: 4/3; border-radius: 6px;
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px), var(--frame-color, var(--retro-pop));
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; font-weight: 700; color: rgba(255,255,255,.85); position: relative;
+  }
+  .preview-frame.entering { animation: fin .3s ease both; }
+  .preview-frame.leaving-back { animation: fout .28s ease both; }
+  @keyframes fin { from { transform: translateX(30px); opacity:0 } to { transform: translateX(0); opacity:1 } }
+  @keyframes fout { from { transform: translateX(-30px); opacity:0 } to { transform: translateX(0); opacity:1 } }
+
+  /* --- the side lever: mounted on the right edge of the body,
+     angled like a real handle, pressed DOWN to advance --- */
+  .vm-lever-mount {
+    position: absolute; right: -26px; top: 34px;
+    width: 40px; height: 96px;
+  }
+  .vm-lever {
+    position: absolute; right: 0; top: 0;
+    width: 26px; height: 78px;
+    background: linear-gradient(180deg, #d64850, #b23038);
+    border: none; border-radius: 6px 12px 12px 6px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,.5);
+    cursor: pointer;
+    transform-origin: top center;
+    transition: transform .18s cubic-bezier(.3,.6,.3,1);
+  }
+  .vm-lever::after {
+    content: ""; position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+    width: 14px; height: 14px; border-radius: 50%; background: rgba(0,0,0,.25);
+  }
+  .vm-lever.pressed { transform: rotate(22deg) translateY(6px); }
+  .lever-hint { font-size: .68rem; opacity: .6; text-align: center; margin-top: 14px; color: var(--vintage-sky); max-width: 300px; }
+  .dots { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,253,199,.3); }
+  .dot.active { background: var(--vintage-sky); }
+
+  .fullview { position: fixed; inset: 0; background: rgba(0,0,0,.88); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:20; }
+  .fullview.active { opacity:1; pointer-events:auto; }
+  .fullview-card { width:min(420px,88vw); aspect-ratio:4/3; border-radius:10px; background:var(--frame-color, var(--retro-pop)); border:6px solid var(--brown-tape); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; position:relative; }
+  .fullview-close { position:absolute; top:-14px; right:-14px; width:32px; height:32px; border-radius:50%; background:var(--view-master); color:#fff; border:none; cursor:pointer; }
+
+  .note { margin-top: 22px; font-size: .78rem; opacity: .6; max-width: 640px; }
+</style>
+</head>
+<body>
+
+<h1>las cintas — hacia un View-Master real</h1>
+<p class="intro">Segundo intento: el disco ahora tiene ventanas de imagen alrededor del borde (como un rollo real), y el visor tiene la silueta clásica con la palanca montada al lado del cuerpo — se presiona hacia abajo para avanzar, como el juguete real.</p>
+
+<div class="stage" id="stage">
+  <div class="shelf" id="shelf">
+    <div class="disk-slot" data-disk="0" data-title="río savegre">
+      <div class="reel">
+        <div class="frame-window" style="--frame-color: var(--retro-pop)"></div>
+        <div class="frame-window" style="--frame-color: var(--view-master)"></div>
+        <div class="frame-window" style="--frame-color: var(--polaroid-sunset)"></div>
+        <div class="frame-window" style="--frame-color: var(--stereo-blue)"></div>
+        <div class="frame-window" style="--frame-color: var(--retro-pop)"></div>
+        <div class="frame-window" style="--frame-color: var(--view-master)"></div>
+        <div class="frame-window" style="--frame-color: var(--polaroid-sunset)"></div>
+        <div class="rim-notch"></div><div class="rim-notch"></div><div class="rim-notch"></div>
+        <div class="rim-notch"></div><div class="rim-notch"></div><div class="rim-notch"></div><div class="rim-notch"></div>
+        <div class="center-hub">
+          <span class="up-mark">▲</span>
+          <span class="hole"></span>
+          <span class="disc-title">río savegre</span>
+          <span class="disc-sub">4 recuerdos</span>
+        </div>
+      </div>
+    </div>
+    <div class="disk-slot" data-disk="1" data-title="cerro chirripó">
+      <div class="reel">
+        <div class="frame-window" style="--frame-color: var(--view-master)"></div>
+        <div class="frame-window" style="--frame-color: var(--retro-pop)"></div>
+        <div class="frame-window" style="--frame-color: var(--brown-tape)"></div>
+        <div class="frame-window" style="--frame-color: var(--stereo-blue)"></div>
+        <div class="frame-window" style="--frame-color: var(--view-master)"></div>
+        <div class="frame-window" style="--frame-color: var(--retro-pop)"></div>
+        <div class="frame-window" style="--frame-color: var(--brown-tape)"></div>
+        <div class="rim-notch"></div><div class="rim-notch"></div><div class="rim-notch"></div>
+        <div class="rim-notch"></div><div class="rim-notch"></div><div class="rim-notch"></div><div class="rim-notch"></div>
+        <div class="center-hub">
+          <span class="up-mark">▲</span>
+          <span class="hole"></span>
+          <span class="disc-title">cerro chirripó</span>
+          <span class="disc-sub">3 recuerdos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="viewer-wrap" id="viewerWrap">
+    <button class="close-btn" id="closeBtn">✕ cerrar</button>
+    <div class="viewer-title" id="viewerTitle">río savegre</div>
+    <div class="viewmaster">
+      <div class="vm-top">
+        <div class="vm-eyecups"><span></span><span></span></div>
+      </div>
+      <div class="vm-body">
+        <div class="screen-window">
+          <div class="preview-frame" id="previewFrame">
+            <div class="swatch" id="swatch">frame 1</div>
+          </div>
+        </div>
+        <div class="vm-lever-mount">
+          <button class="vm-lever" id="leverBtn" aria-label="avanzar cinta"></button>
+        </div>
+      </div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="lever-hint">presioná la palanca (lado derecho) para avanzar · tocá la mitad izquierda del visor para retroceder</div>
+  </div>
+</div>
+
+<p class="note">Esto todavía es un mockup de exploración, no el arte final — pero ahora apunta directo a la silueta y mecánica de un View-Master real. Si esta dirección se siente bien, la convierto en la referencia para que Code la porte.</p>
+
+<div class="fullview" id="fullview">
+  <div class="fullview-card" id="fullviewCard">frame 1<button class="fullview-close" id="fullviewClose">✕</button></div>
+</div>
+
+<script>
+  const disks = [
+    { title: 'río savegre', frames: [
+      { label: 'frame 1 · foto', color: 'var(--retro-pop)' },
+      { label: 'frame 2 · video', color: 'var(--view-master)' },
+      { label: 'frame 3 · foto', color: 'var(--polaroid-sunset)' },
+      { label: 'frame 4 · foto banda', color: 'var(--stereo-blue)' },
+    ]},
+    { title: 'cerro chirripó', frames: [
+      { label: 'frame 1 · foto', color: 'var(--view-master)' },
+      { label: 'frame 2 · video', color: 'var(--retro-pop)' },
+      { label: 'frame 3 · foto', color: 'var(--brown-tape)' },
+    ]},
+  ];
+
+  const shelf = document.getElementById('shelf');
+  const viewerWrap = document.getElementById('viewerWrap');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const previewFrame = document.getElementById('previewFrame');
+  const swatch = document.getElementById('swatch');
+  const dotsEl = document.getElementById('dots');
+  const leverBtn = document.getElementById('leverBtn');
+  const closeBtn = document.getElementById('closeBtn');
+  const fullview = document.getElementById('fullview');
+  const fullviewCard = document.getElementById('fullviewCard');
+  const fullviewClose = document.getElementById('fullviewClose');
+
+  let currentDisk = null, currentFrame = 0;
+
+  function render(direction) {
+    const disk = disks[currentDisk];
+    const frame = disk.frames[currentFrame];
+    swatch.style.setProperty('--frame-color', frame.color);
+    swatch.textContent = frame.label;
+    previewFrame.classList.remove('entering', 'leaving-back');
+    void previewFrame.offsetWidth;
+    previewFrame.classList.add(direction === 'back' ? 'leaving-back' : 'entering');
+    dotsEl.innerHTML = '';
+    disk.frames.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === currentFrame ? ' active' : '');
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function open(i) {
+    currentDisk = i; currentFrame = 0;
+    viewerTitle.textContent = disks[i].title;
+    render('forward');
+    viewerWrap.classList.add('active');
+  }
+
+  shelf.querySelectorAll('.disk-slot').forEach((slot, i) => {
+    slot.addEventListener('click', () => open(i));
+  });
+  closeBtn.addEventListener('click', () => viewerWrap.classList.remove('active'));
+
+  leverBtn.addEventListener('click', () => {
+    leverBtn.classList.add('pressed');
+    setTimeout(() => leverBtn.classList.remove('pressed'), 180);
+    const disk = disks[currentDisk];
+    currentFrame = (currentFrame + 1) % disk.frames.length;
+    render('forward');
+  });
+
+  previewFrame.addEventListener('click', (e) => {
+    const rect = previewFrame.getBoundingClientRect();
+    if ((e.clientX - rect.left) < rect.width / 2) {
+      const disk = disks[currentDisk];
+      currentFrame = (currentFrame - 1 + disk.frames.length) % disk.frames.length;
+      render('back');
+      return;
+    }
+    const disk = disks[currentDisk];
+    const frame = disk.frames[currentFrame];
+    fullviewCard.style.setProperty('--frame-color', frame.color);
+    fullviewCard.firstChild.textContent = frame.label + ' (completo)';
+    fullview.classList.add('active');
+  });
+  fullviewClose.addEventListener('click', () => fullview.classList.remove('active'));
+</script>
+
+</body>
+</html>
