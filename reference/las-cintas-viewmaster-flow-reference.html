@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>las cintas — View-Master disk concept</title>
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --retro-pop: #4DA495;
+    --stereo-blue: #006080;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #1a1a1a;
+    color: #eee;
+    padding: 24px 16px 80px;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  p.intro { opacity: .7; max-width: 640px; margin: 0 0 28px; font-size: .9rem; line-height: 1.5; }
+  .stage {
+    position: relative;
+    max-width: 720px;
+    min-height: 520px;
+  }
+
+  /* ---------------- Shelf view: grid of disks ---------------- */
+  .shelf {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 28px;
+    transition: opacity .25s ease;
+  }
+  .shelf.hidden { display: none; }
+
+  .disk-slot { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+  .disk {
+    width: 160px; height: 160px; border-radius: 50%;
+    position: relative;
+    background:
+      radial-gradient(circle at center, #f4f1e6 0 22%, transparent 22.5%),
+      conic-gradient(from 0deg, #efe8d2 0 12deg, #e3dabf 12deg 24deg);
+    box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 0 0 2px rgba(0,0,0,.15);
+    transition: transform .45s cubic-bezier(.2,.8,.2,1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .disk-slot:hover .disk { transform: scale(1.05) rotate(8deg); }
+  .disk::before {
+    /* sprocket holes ring */
+    content: "";
+    position: absolute; inset: 8px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(rgba(0,0,0,.12) 0deg 3deg, transparent 3deg 24deg);
+  }
+  .disk .hub {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--disk-color, var(--view-master));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.1rem; z-index: 2;
+    box-shadow: 0 0 0 4px rgba(255,255,255,.5);
+  }
+  .disk-title {
+    margin-top: 12px; font-weight: 700; font-size: .95rem; text-align: center;
+    color: var(--vintage-sky);
+  }
+  .disk-sub { font-size: .75rem; opacity: .55; margin-top: 2px; }
+
+  /* ---------------- Viewer (zoomed-in) mode ---------------- */
+  .viewer {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center;
+    opacity: 0; pointer-events: none;
+    transform: scale(.85);
+    transition: opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1);
+  }
+  .viewer.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+
+  .viewer-body {
+    position: relative;
+    width: min(420px, 92vw);
+    background: var(--brown-tape);
+    border-radius: 18px;
+    padding: 22px 18px 30px;
+    box-shadow: 0 12px 34px rgba(0,0,0,.55);
+  }
+  .viewer-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .back-btn {
+    font: inherit; font-size: .78rem; font-weight: 700;
+    background: none; border: 1px solid rgba(255,253,199,.4);
+    color: var(--vintage-sky); border-radius: 6px; padding: 5px 10px; cursor: pointer;
+  }
+  .viewer-title { color: var(--vintage-sky); font-weight: 700; font-size: .95rem; }
+
+  .eyepiece {
+    position: relative;
+    width: 100%; aspect-ratio: 4/3;
+    border-radius: 999px / 40%;
+    background: #0e0e0e;
+    box-shadow: inset 0 0 0 6px #3a221c, inset 0 0 26px rgba(0,0,0,.8);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .preview-frame {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px;
+    color: var(--vintage-sky);
+    cursor: zoom-in;
+  }
+  .preview-frame .swatch {
+    width: 78%; aspect-ratio: 4/3; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 700; letter-spacing: .5px;
+    color: rgba(255,255,255,.85);
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px), var(--frame-color, var(--retro-pop));
+    position: relative;
+  }
+  .preview-frame .swatch .hint {
+    position: absolute; bottom: 6px; right: 8px; font-size: .65rem; opacity: .8;
+  }
+  .preview-frame .play-badge {
+    position: absolute; top: 10px; left: 10px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center;
+  }
+  .preview-frame .play-badge::before {
+    content: ""; border-style: solid; border-width: 5px 0 5px 8px;
+    border-color: transparent transparent transparent #fff; margin-left: 2px;
+  }
+  .preview-frame.entering { animation: disk-click-in .32s ease both; }
+  .preview-frame.leaving-back { animation: disk-click-back .28s ease both; }
+  @keyframes disk-click-in {
+    from { transform: translateX(40px) rotate(6deg); opacity: 0; }
+    to { transform: translateX(0) rotate(0); opacity: 1; }
+  }
+  @keyframes disk-click-back {
+    from { transform: translateX(-40px) rotate(-6deg); opacity: 0; }
+    to { transform: translateX(0) rotate(0); opacity: 1; }
+  }
+
+  .viewer-controls {
+    display: flex; align-items: center; justify-content: center; gap: 18px;
+    margin-top: 16px;
+  }
+  .lever {
+    width: 46px; height: 88px;
+    background: linear-gradient(180deg, #d9d9d9, #a8a8a8);
+    border-radius: 8px;
+    cursor: pointer; border: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,.4);
+    transition: transform .12s ease;
+  }
+  .lever:active { transform: translateY(3px) rotate(4deg); }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,253,199,.3); }
+  .dot.active { background: var(--vintage-sky); }
+  .lever-hint { font-size: .7rem; opacity: .6; text-align: center; margin-top: 6px; color: var(--vintage-sky); }
+
+  /* ---------------- Fullscreen preview open ---------------- */
+  .fullview {
+    position: fixed; inset: 0; background: rgba(0,0,0,.88);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .25s ease; z-index: 20;
+  }
+  .fullview.active { opacity: 1; pointer-events: auto; }
+  .fullview-card {
+    width: min(480px, 90vw); aspect-ratio: 4/3; border-radius: 12px;
+    background: var(--frame-color, var(--retro-pop));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 1.1rem; position: relative;
+    border: 6px solid var(--brown-tape);
+    transform: scale(.9); transition: transform .25s ease;
+  }
+  .fullview.active .fullview-card { transform: scale(1); }
+  .fullview-close {
+    position: absolute; top: -14px; right: -14px;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--view-master); color: #fff; border: none;
+    font-size: 1rem; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,.4);
+  }
+
+  .replay-note { margin-top: 20px; font-size: .78rem; opacity: .55; }
+</style>
+</head>
+<body>
+
+<h1>las cintas — disk concept</h1>
+<p class="intro">Each session is a View-Master disk on the shelf, labeled with its name. Click a disk to "load" it into the viewer — the lever cycles through preview frames (photos/videos from that session). Click a preview to open it full-size.</p>
+
+<div class="stage">
+  <div class="shelf" id="shelf">
+    <div class="disk-slot" data-disk="0" data-color="var(--view-master)" data-title="río savegre" data-sub="4 recuerdos">
+      <div class="disk"><div class="hub" style="--disk-color: var(--view-master)">▶</div></div>
+      <div class="disk-title">río savegre</div>
+      <div class="disk-sub">4 recuerdos</div>
+    </div>
+    <div class="disk-slot" data-disk="1" data-color="var(--retro-pop)" data-title="cerro chirripó" data-sub="3 recuerdos">
+      <div class="disk"><div class="hub" style="--disk-color: var(--retro-pop)">▶</div></div>
+      <div class="disk-title">cerro chirripó</div>
+      <div class="disk-sub">3 recuerdos</div>
+    </div>
+    <div class="disk-slot" data-disk="2" data-color="var(--polaroid-sunset)" data-title="calle central" data-sub="3 recuerdos">
+      <div class="disk"><div class="hub" style="--disk-color: var(--polaroid-sunset)">▶</div></div>
+      <div class="disk-title">calle central</div>
+      <div class="disk-sub">3 recuerdos</div>
+    </div>
+  </div>
+
+  <div class="viewer" id="viewer">
+    <div class="viewer-body">
+      <div class="viewer-top">
+        <button class="back-btn" id="backBtn">‹ estante</button>
+        <div class="viewer-title" id="viewerTitle">río savegre</div>
+        <span style="width:56px"></span>
+      </div>
+      <div class="eyepiece">
+        <div class="preview-frame" id="previewFrame">
+          <div class="swatch" id="swatch">
+            frame 1
+            <span class="hint">click para ver completo</span>
+          </div>
+        </div>
+      </div>
+      <div class="viewer-controls">
+        <button class="lever" id="leverBtn" title="siguiente"></button>
+        <div class="dots" id="dots"></div>
+      </div>
+      <div class="lever-hint">palanca: avanza · toca la mitad izquierda del visor: retrocede</div>
+    </div>
+  </div>
+</div>
+
+<p class="replay-note">Esto es solo un mockup de interacción — no representa el estilo visual final del disco/visor, solo el flujo: estante → disco → visor con palanca → completo.</p>
+
+<div class="fullview" id="fullview">
+  <div class="fullview-card" id="fullviewCard">
+    frame 1
+    <button class="fullview-close" id="fullviewClose">✕</button>
+  </div>
+</div>
+
+<script>
+  const disks = [
+    { color: 'var(--view-master)', title: 'río savegre', frames: [
+      { label: 'frame 1 · foto', color: 'var(--retro-pop)', video: false },
+      { label: 'frame 2 · video', color: 'var(--view-master)', video: true },
+      { label: 'frame 3 · foto', color: 'var(--polaroid-sunset)', video: false },
+      { label: 'frame 4 · foto banda', color: 'var(--stereo-blue)', video: false },
+    ]},
+    { color: 'var(--retro-pop)', title: 'cerro chirripó', frames: [
+      { label: 'frame 1 · foto', color: 'var(--view-master)', video: false },
+      { label: 'frame 2 · video', color: 'var(--retro-pop)', video: true },
+      { label: 'frame 3 · foto', color: 'var(--brown-tape)', video: false },
+    ]},
+    { color: 'var(--polaroid-sunset)', title: 'calle central', frames: [
+      { label: 'frame 1 · video', color: 'var(--polaroid-sunset)', video: true },
+      { label: 'frame 2 · foto', color: 'var(--retro-pop)', video: false },
+      { label: 'frame 3 · foto', color: 'var(--stereo-blue)', video: false },
+    ]},
+  ];
+
+  const shelf = document.getElementById('shelf');
+  const viewer = document.getElementById('viewer');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const previewFrame = document.getElementById('previewFrame');
+  const swatch = document.getElementById('swatch');
+  const dotsEl = document.getElementById('dots');
+  const leverBtn = document.getElementById('leverBtn');
+  const backBtn = document.getElementById('backBtn');
+  const fullview = document.getElementById('fullview');
+  const fullviewCard = document.getElementById('fullviewCard');
+  const fullviewClose = document.getElementById('fullviewClose');
+
+  let currentDisk = null;
+  let currentFrame = 0;
+
+  function renderFrame(direction) {
+    const disk = disks[currentDisk];
+    const frame = disk.frames[currentFrame];
+    swatch.style.setProperty('--frame-color', frame.color);
+    swatch.innerHTML = frame.label + '<span class="hint">click para ver completo</span>' +
+      (frame.video ? '<span class="play-badge"></span>' : '');
+    previewFrame.classList.remove('entering', 'leaving-back');
+    void previewFrame.offsetWidth;
+    previewFrame.classList.add(direction === 'back' ? 'leaving-back' : 'entering');
+
+    dotsEl.innerHTML = '';
+    disk.frames.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === currentFrame ? ' active' : '');
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function openViewer(diskIndex) {
+    currentDisk = diskIndex;
+    currentFrame = 0;
+    viewerTitle.textContent = disks[diskIndex].title;
+    renderFrame('forward');
+    viewer.classList.add('active');
+    shelf.classList.add('hidden');
+  }
+
+  function closeViewer() {
+    viewer.classList.remove('active');
+    shelf.classList.remove('hidden');
+  }
+
+  shelf.querySelectorAll('.disk-slot').forEach(slot => {
+    slot.addEventListener('click', () => openViewer(parseInt(slot.dataset.disk, 10)));
+  });
+
+  backBtn.addEventListener('click', closeViewer);
+
+  leverBtn.addEventListener('click', () => {
+    const disk = disks[currentDisk];
+    currentFrame = (currentFrame + 1) % disk.frames.length;
+    renderFrame('forward');
+  });
+
+  previewFrame.addEventListener('click', (e) => {
+    // left half = back, otherwise open full
+    const rect = previewFrame.getBoundingClientRect();
+    const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+    if (isLeftHalf) {
+      const disk = disks[currentDisk];
+      currentFrame = (currentFrame - 1 + disk.frames.length) % disk.frames.length;
+      renderFrame('back');
+      return;
+    }
+    const disk = disks[currentDisk];
+    const frame = disk.frames[currentFrame];
+    fullviewCard.style.setProperty('--frame-color', frame.color);
+    fullviewCard.firstChild.textContent = frame.label + (frame.video ? ' (reproduciendo…)' : ' (tamaño completo)');
+    fullview.classList.add('active');
+  });
+
+  fullviewClose.addEventListener('click', () => fullview.classList.remove('active'));
+  fullview.addEventListener('click', (e) => { if (e.target === fullview) fullview.classList.remove('active'); });
+</script>
+
+</body>
+</html>
