@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nuestras cintas — carrusel 3d demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --retro-pop: #4DA495;
+    --stereo-blue: #006080;
+    --font-display: 'Fredoka', sans-serif;
+    --font-body: 'Montserrat', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1rem 4rem;
+    background: var(--vintage-sky);
+    font-family: var(--font-body);
+    color: var(--brown-tape);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  h1 { font-family: var(--font-display); margin: 0 0 0.25rem; text-align: center; }
+  .page { max-width: 30rem; width: 100%; }
+  .eyebrow {
+    text-align: center;
+    color: var(--stereo-blue);
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+  }
+  .sub { opacity: 0.75; margin: 0.25rem 0 1.5rem; text-align: center; }
+
+  /* ===== Carousel stage =====
+     The carousel sits at a permanent base angle (BASE_ANGLE in the
+     script) instead of resting flat-on -- that's what keeps a slice
+     of the next face visible at all times, like standing at the
+     corner of the real turntable in the reference photo, rather than
+     looking at one flat face that swaps content. */
+  .stage {
+    position: relative;
+    height: 23rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 55rem;
+  }
+  .carousel {
+    position: relative;
+    width: 18.5rem;
+    height: 20rem;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.3, 0.7, 0.3, 1);
+    cursor: grab;
+  }
+  .carousel.is-dragging { cursor: grabbing; }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1.5rem 0.75rem 0.8rem;
+    border-radius: 0.5rem;
+    backface-visibility: hidden;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brown-tape) 84%, black 16%), color-mix(in srgb, var(--brown-tape) 60%, black 40%));
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--vintage-sky) 10%, transparent);
+    transform-style: preserve-3d;
+  }
+  .face-0 { transform: rotateY(0deg) translateZ(9.25rem); }
+  .face-1 { transform: rotateY(90deg) translateZ(9.25rem); }
+  .face-2 { transform: rotateY(180deg) translateZ(9.25rem); }
+  .face-3 { transform: rotateY(270deg) translateZ(9.25rem); }
+
+  .face-label {
+    position: absolute;
+    top: 0.55rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    letter-spacing: 0.07em;
+    color: color-mix(in srgb, var(--vintage-sky) 65%, transparent);
+  }
+
+  .lid {
+    position: absolute;
+    top: -1.5rem;
+    left: 50%;
+    width: 10.6rem;
+    height: 3rem;
+    transform: translateX(-50%) rotateX(90deg);
+    transform-origin: bottom center;
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--brown-tape) 55%, black 20%), color-mix(in srgb, var(--brown-tape) 28%, black 58%));
+    border-radius: 50%;
+    box-shadow: 0 4px 10px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .slot {
+    position: relative;
+    flex: 1;
+    background: color-mix(in srgb, black 42%, transparent);
+    border-radius: 0.3rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.15rem;
+    box-shadow: inset 0 2px 6px color-mix(in srgb, black 60%, transparent);
+    transform-style: preserve-3d;
+  }
+
+  /* ===== The per-cassette "box coming off the shelf" look, carried
+     over from the flat-shelf version Esteban approved ===== */
+  .spine {
+    position: relative;
+    width: 100%;
+    height: 84%;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    text-align: left;
+    font-family: var(--font-body);
+    transform-style: preserve-3d;
+    transform: translateZ(0.55rem);
+    transition: transform 0.12s ease;
+  }
+  .spine:hover, .spine:focus-visible { transform: translateZ(0.75rem); }
+  .spine:active { transform: translateZ(0.3rem); }
+  .spine-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.22rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.6rem;
+    box-shadow: 0 3px 7px color-mix(in srgb, black 40%, transparent);
+  }
+  .spine-side {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0.5rem;
+    height: 100%;
+    transform-origin: right center;
+    transform: rotateY(90deg) translateZ(0.25rem);
+  }
+  .spine-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.15;
+    color: var(--vintage-sky);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .placeholder-slot .spine-face {
+    background: color-mix(in srgb, var(--brown-tape) 60%, black 40%) !important;
+    box-shadow: none;
+  }
+  .placeholder-slot .spine { cursor: default; }
+  .placeholder-slot .spine-title {
+    color: color-mix(in srgb, var(--vintage-sky) 55%, transparent);
+    font-style: italic;
+    font-weight: 500;
+  }
+  .placeholder-slot .spine-side { opacity: 0.5; }
+
+  /* ===== Controls ===== */
+  .turn-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    margin-top: 0.5rem;
+  }
+  .turn-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    border: none;
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px color-mix(in srgb, black 35%, transparent);
+  }
+  .turn-btn svg { width: 20px; height: 20px; }
+  .face-dots { display: flex; gap: 0.4rem; }
+  .face-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--brown-tape) 35%, transparent);
+  }
+  .face-dot.is-active { background: var(--brown-tape); }
+
+  footer {
+    max-width: 27rem;
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="eyebrow">lado a / lado b</div>
+  <h1>nuestras cintas</h1>
+  <p class="sub">girá el estante para ver las 16 cintas — tocá una para ver las canciones</p>
+
+  <div class="stage">
+    <div class="carousel" id="carousel">
+      <div class="lid"></div>
+
+      <div class="face face-0">
+        <div class="face-label">estante de cassettes</div>
+        <div class="slot">
+          <button class="spine">
+            <div class="spine-face" style="background: color-mix(in srgb, var(--view-master) 80%, black 10%);">
+              <span class="spine-title">Audiocassettes</span>
+            </div>
+            <div class="spine-side" style="background: color-mix(in srgb, var(--view-master) 55%, black 45%);"></div>
+          </button>
+        </div>
+        <div class="slot">
+          <button class="spine">
+            <div class="spine-face" style="background: color-mix(in srgb, var(--retro-pop) 80%, black 10%);">
+              <span class="spine-title">Reel Real</span>
+            </div>
+            <div class="spine-side" style="background: color-mix(in srgb, var(--retro-pop) 55%, black 45%);"></div>
+          </button>
+        </div>
+        <div class="slot">
+          <button class="spine">
+            <div class="spine-face" style="background: color-mix(in srgb, var(--polaroid-sunset) 80%, black 10%);">
+              <span class="spine-title">En vivo - Montserrat, Coronado</span>
+            </div>
+            <div class="spine-side" style="background: color-mix(in srgb, var(--polaroid-sunset) 55%, black 45%);"></div>
+          </button>
+        </div>
+        <div class="slot">
+          <button class="spine">
+            <div class="spine-face" style="background: color-mix(in srgb, var(--stereo-blue) 80%, black 10%);">
+              <span class="spine-title">En vivo - Calle Blancos</span>
+            </div>
+            <div class="spine-side" style="background: color-mix(in srgb, var(--stereo-blue) 55%, black 45%);"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="face face-1">
+        <div class="face-label">estante de cassettes</div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+      </div>
+
+      <div class="face face-2">
+        <div class="face-label">estante de cassettes</div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+      </div>
+
+      <div class="face face-3">
+        <div class="face-label">estante de cassettes</div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+        <div class="slot placeholder-slot">
+          <button class="spine"><div class="spine-face"><span class="spine-title">próximamente</span></div><div class="spine-side"></div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="turn-controls">
+    <button class="turn-btn" id="turnLeft" aria-label="girar a la izquierda">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+    </button>
+    <div class="face-dots" id="faceDots">
+      <div class="face-dot is-active"></div>
+      <div class="face-dot"></div>
+      <div class="face-dot"></div>
+      <div class="face-dot"></div>
+    </div>
+    <button class="turn-btn" id="turnRight" aria-label="girar a la derecha">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+
+  <footer>
+    Referencia aprobada — carrusel giratorio de 4 caras x 4 cintas = 16 espacios. Girá con las flechas o arrastrando.
+  </footer>
+</div>
+
+<script>
+  const BASE_ANGLE = 24; // permanent offset so the next face's edge stays visible
+  const carousel = document.getElementById('carousel');
+  const dots = document.querySelectorAll('.face-dot');
+  let currentFace = 0;
+  const FACE_ANGLE = 90;
+
+  function angleFor(face, extra = 0) {
+    return -face * FACE_ANGLE + BASE_ANGLE + extra;
+  }
+
+  function updateCarousel() {
+    carousel.style.transform = `rotateY(${angleFor(currentFace)}deg)`;
+    dots.forEach((d, i) => d.classList.toggle('is-active', i === currentFace));
+  }
+  updateCarousel();
+
+  document.getElementById('turnRight').addEventListener('click', () => {
+    currentFace = (currentFace + 1) % 4;
+    updateCarousel();
+  });
+  document.getElementById('turnLeft').addEventListener('click', () => {
+    currentFace = (currentFace + 3) % 4;
+    updateCarousel();
+  });
+
+  let dragging = false, startX = 0, startFace = 0, dragDelta = 0;
+  const stage = document.querySelector('.stage');
+
+  function pointerDown(x) {
+    dragging = true;
+    startX = x;
+    startFace = currentFace;
+    carousel.style.transition = 'none';
+    carousel.classList.add('is-dragging');
+  }
+  function pointerMove(x) {
+    if (!dragging) return;
+    dragDelta = (x - startX) / 3.2;
+    carousel.style.transform = `rotateY(${angleFor(startFace, dragDelta)}deg)`;
+  }
+  function pointerUp() {
+    if (!dragging) return;
+    dragging = false;
+    carousel.style.transition = '';
+    carousel.classList.remove('is-dragging');
+    const steps = Math.round(-dragDelta / FACE_ANGLE);
+    currentFace = ((startFace + steps) % 4 + 4) % 4;
+    updateCarousel();
+  }
+
+  stage.addEventListener('pointerdown', (e) => pointerDown(e.clientX));
+  window.addEventListener('pointermove', (e) => pointerMove(e.clientX));
+  window.addEventListener('pointerup', pointerUp);
+</script>
+
+</body>
+</html>
