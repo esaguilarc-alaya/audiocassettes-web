@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>el librito — lomo de dos partes tipo sticker</title>
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --ink: #3A2E22;
+    /* measured against this exact content so 4 folds divide the strip's
+       real height evenly -- the last square lands exactly full-size
+       with zero blank padding added anywhere */
+    --panel-h: 221.6px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #1c1c1c;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+    padding: 2rem 1rem 6rem;
+  }
+  .caption {
+    font-family: Arial, sans-serif;
+    color: #999;
+    text-align: center;
+    font-size: 0.8rem;
+    max-width: 560px;
+    margin: 1.25rem auto 0;
+    line-height: 1.5;
+  }
+  h1.page-title {
+    font-family: Arial, sans-serif;
+    color: #eee;
+    text-align: center;
+    font-size: 1.1rem;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    margin: 0 0 1.5rem;
+  }
+
+  .strip-frame {
+    max-width: 560px;
+    margin: 0 auto;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  }
+
+  .strip {
+    position: relative;
+    background-color: #F9F3DE;
+    padding: 2.5rem 2.25rem 0;
+    background-image:
+      repeating-linear-gradient(115deg, rgba(89,51,44,0.03) 0px, rgba(89,51,44,0.03) 1px, transparent 1px, transparent 3px),
+      radial-gradient(circle at 14% 8%, rgba(150,105,50,0.14) 0, transparent 6%),
+      radial-gradient(circle at 85% 30%, rgba(150,105,50,0.12) 0, transparent 5%),
+      radial-gradient(circle at 10% 62%, rgba(150,105,50,0.13) 0, transparent 6%),
+      radial-gradient(circle at 90% 85%, rgba(150,105,50,0.11) 0, transparent 5%),
+      repeating-linear-gradient(180deg,
+        transparent 0px, transparent calc(var(--panel-h) - 7px),
+        rgba(89,51,44,0.05) calc(var(--panel-h) - 7px), rgba(89,51,44,0.22) calc(var(--panel-h) - 1.5px),
+        rgba(60,35,25,0.32) var(--panel-h), rgba(89,51,44,0.22) calc(var(--panel-h) + 1.5px),
+        rgba(89,51,44,0.05) calc(var(--panel-h) + 7px), transparent calc(var(--panel-h) + 7px), transparent var(--panel-h)),
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(89,51,44,0.10) 100%);
+    background-size: auto, auto, auto, auto, auto, 100% var(--panel-h), auto;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat-y, no-repeat;
+  }
+  .strip-corner {
+    position: absolute; top: 0; right: 0;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 30px 30px 0;
+    border-color: transparent #E7DCB8 transparent transparent;
+    filter: drop-shadow(-2px 2px 3px rgba(0,0,0,0.25));
+  }
+
+  .strip h2 {
+    font-family: 'Brush Script MT', cursive, Georgia, serif;
+    font-size: 1.6rem;
+    color: var(--brown-tape);
+    margin: 0 0 0.5rem;
+  }
+  .strip p { line-height: 1.75; margin: 0 0 1.1rem; font-size: 0.95rem; }
+  .strip .a-lineup { list-style: none; margin: 0 0 0.5rem; padding: 0; }
+  .strip .a-lineup li {
+    padding: 0.35rem 0;
+    border-bottom: 1px dashed rgba(89,51,44,0.3);
+  }
+  .strip .a-lineup li:last-child { border-bottom: none; }
+  .strip .section-block { padding-bottom: 1.5rem; }
+  .strip .signature {
+    font-family: 'Brush Script MT', cursive, Georgia, serif;
+    font-size: 1.2rem;
+    color: var(--brown-tape);
+    opacity: 0.8;
+    text-align: right;
+    margin: 0 0 1.5rem;
+  }
+  /* ===== the final panel: ONE single physical "sticker" (matching the
+     photo's yellow spine label), same height as a regular accordion
+     panel, folded onto the strip -- with its OWN two printed registers
+     inside it (name / logo), like the label in the reference photo has
+     a thin "JOE BURKE" band and a bigger printed band below it. This
+     reads as one applied label, not two separate flat blocks. ===== */
+  .spine {
+    position: relative;
+    /* shortened by about a third vs. a regular accordion panel */
+    height: calc(var(--panel-h) * 0.667);
+    margin: 0;
+    /* no separate top crease here anymore -- the strip's own repeating
+       fold-line already lands exactly on this seam, so drawing a second
+       one right on top of it was the "two folds" duplicate. This block
+       relies on that single shared line. */
+    box-shadow:
+      0 2px 3px rgba(0,0,0,0.25),
+      0 8px 18px rgba(0,0,0,0.35),
+      inset 0 0 0 1px rgba(0,0,0,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* register 1: thin band, band name -- like "JOE BURKE" in the photo */
+  .spine-name {
+    position: relative;
+    flex: 0 0 30%;
+    background: linear-gradient(180deg, #FCF6E0 0%, #F3E6BC 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 -3px 6px -2px rgba(89,51,44,0.35); /* fold line to the register below */
+  }
+  .spine-name .name {
+    font-family: 'Brush Script MT', cursive, Georgia, serif;
+    font-size: 1.3rem;
+    color: var(--brown-tape);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  }
+
+  /* register 2: bigger band, isologo -- like the denser printed area
+     below "JOE BURKE" in the photo */
+  .spine-logo {
+    position: relative;
+    flex: 1;
+    background: linear-gradient(180deg, #DD4E58 0%, var(--view-master) 40%, #A6323B 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 4px 8px -3px rgba(0,0,0,0.5); /* receives the shadow cast by the fold above it */
+  }
+  .spine-logo::after {
+    /* bottom edge: closing shadow, last fold of the whole booklet */
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 10px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+  }
+  .isologo {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255,253,199,0.9), rgba(255,253,199,0.15) 60%, transparent 62%),
+                repeating-radial-gradient(circle, rgba(255,253,199,0.85) 0 2px, transparent 2px 8px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4), inset 0 0 0 3px rgba(255,253,199,0.9);
+  }
+  .isologo::after {
+    content: "";
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--view-master);
+    box-shadow: 0 0 0 3px rgba(255,253,199,0.9);
+  }
+
+  @media (max-width: 420px) {
+    .strip { padding: 2rem 1.25rem 0; }
+  }
+</style>
+</head>
+<body>
+
+  <h1 class="page-title">el librito — lomo de una sola etiqueta con dos registros</h1>
+
+  <div class="strip-frame">
+    <div class="strip">
+      <div class="strip-corner"></div>
+
+      <div class="section-block">
+        <h2>notas de cinta</h2>
+        <p>En 1987 Ronald Reagan hacía de las suyas como presidente de Estados Unidos, Óscar Arias celebraba su Nobel de la Paz, mientras miles de costarricenses perdieron sus ahorros de la noche a la mañana con la quiebra masiva de empresas financieras no bancarias.</p>
+        <p>La cosa es que ese año conocí a Gerson entrando a primer grado de escuela. Ya para sexto grado éramos mejores amigos, y a los 13 años decidimos tener nuestra banda de rock — el único problema es que no sabíamos tocar ningún instrumento.</p>
+        <p>Grabamos nuestras primeras canciones en estudio con Iván en la guitarra y nuestro amigo y miembro honorario por siempre, Rolando, en la batería.</p>
+        <p>Hoy volvemos con una agrupación de viejos conocidos como Iván, y un nuevo amigo que nos devolvió las ganas y la paz: nuestro querido Cali.</p>
+      </div>
+
+      <div class="signature">— Esteban</div>
+
+      <div class="section-block">
+        <h2>quiénes somos hoy</h2>
+        <ul class="a-lineup">
+          <li>Gerson — bajo y teclados</li>
+          <li>Cali — batería</li>
+          <li>Esteban — voz y guitarra</li>
+          <li>Iván — guitarra</li>
+        </ul>
+      </div>
+
+      <div class="section-block">
+        <h2>amigos de audiocassettes</h2>
+        <p>A través de los años compartimos banda con: Roberto, Alonso, Vladimir, Víctor, Erick, Chris, Álvaro. Y Rolando nuestro baterista en distintos periodos y nuestro amigo siempre.</p>
+      </div>
+
+    </div>
+
+    <div class="spine">
+      <div class="spine-name"><div class="name">Audiocassettes</div></div>
+      <div class="spine-logo"><div class="isologo"></div></div>
+    </div>
+  </div>
+
+  <p class="caption">Encontré la causa raíz: la distancia entre dobleces estaba fija en un número calculado para el ancho de escritorio, así que en celular caía en un punto distinto y partía el párrafo dejando "amigo siempre." sola en un sobrante. Ahora la distancia se calcula con JavaScript en cada carga, midiendo dónde termina el último párrafo real, para que el doblez antes del último cuadro caiga siempre ANTES de que ese párrafo empiece — así el párrafo completo, con su última línea incluida, siempre queda dentro de un solo cuadro, sea cual sea el ancho de pantalla.</p>
+
+  <script>
+    (function () {
+      const strip = document.querySelector('.strip');
+      const sections = document.querySelectorAll('.section-block');
+      const lastP = sections[sections.length - 1].querySelector('p') || sections[sections.length - 1];
+
+      function fit() {
+        const stripRect = strip.getBoundingClientRect();
+        const total = strip.scrollHeight;
+        const lastTop = lastP.getBoundingClientRect().top - stripRect.top;
+
+        // try panel counts from most (smaller panels) to fewest (larger),
+        // pick the first one where the fold before the final panel lands
+        // before the last paragraph even starts -- guaranteeing that
+        // paragraph, last line included, stays whole in one panel.
+        let chosen = null;
+        for (let n = 5; n >= 2; n--) {
+          const panelH = total / n;
+          const lastFold = (n - 1) * panelH;
+          if (lastFold <= lastTop - 4) { chosen = panelH; break; }
+        }
+        if (!chosen) chosen = total / 2; // fallback: two big panels, always safe
+
+        document.documentElement.style.setProperty('--panel-h', chosen + 'px');
+      }
+
+      fit();
+      window.addEventListener('resize', fit);
+    })();
+  </script>
+
+</body>
+</html>
