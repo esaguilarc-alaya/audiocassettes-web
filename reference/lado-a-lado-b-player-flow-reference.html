@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audiocassettes — cassettes + reproductor (demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brown-tape: #59332C;
+    --vintage-sky: #FFFDC7;
+    --polaroid-sunset: #EF9A49;
+    --view-master: #D54852;
+    --retro-pop: #4DA495;
+    --stereo-blue: #006080;
+    --ink: #2A1D16;
+    --font-display: 'Fredoka', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: color-mix(in srgb, var(--brown-tape) 30%, black);
+    font-family: 'Montserrat', Arial, sans-serif;
+    color: var(--vintage-sky);
+    overscroll-behavior: none;
+  }
+  h2, h3 { font-family: var(--font-display); }
+  .phone-frame {
+    max-width: 420px; margin: 2rem auto;
+    background: #000; border-radius: 2.2rem; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .app {
+    position: relative; height: 860px; max-height: 90vh;
+    border-radius: 1.6rem; overflow: hidden;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brown-tape) 55%, black) 0%, color-mix(in srgb, var(--brown-tape) 25%, black) 55%);
+  }
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(.2,.8,.3,1);
+    overflow-y: auto;
+  }
+  .screen.active { transform: translateX(0); }
+  .screen.behind { transform: translateX(-100%); }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.1rem 0.4rem;
+    font-size: 0.7rem; letter-spacing: 0.08em; text-transform: lowercase;
+    color: color-mix(in srgb, var(--stereo-blue) 55%, var(--vintage-sky));
+    flex-shrink: 0;
+  }
+  .topbar button {
+    background: none; border: none; color: var(--vintage-sky);
+    font-size: 1.3rem; cursor: pointer; opacity: 0.85; padding: 0.25rem;
+  }
+
+  /* ===== SCREEN 1: shelf of closed cassettes ===== */
+  .shelf-title {
+    padding: 0 1.3rem; margin: 0.3rem 0 0.2rem;
+    font-size: 1.1rem;
+  }
+  .shelf-sub {
+    padding: 0 1.3rem; margin: 0 0 1rem;
+    font-size: 0.75rem; opacity: 0.6;
+  }
+  .cassette-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; padding: 0 1.3rem 1.5rem;
+  }
+  .cassette-box {
+    position: relative;
+    aspect-ratio: 3/2;
+    border-radius: 0.5rem;
+    padding: 0.55rem;
+    cursor: pointer;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(0,0,0,0.25);
+    transition: transform 0.15s;
+  }
+  .cassette-box:active { transform: scale(0.96); }
+  .cassette-box .reels {
+    display: flex; justify-content: space-evenly; align-items: center;
+    background: rgba(0,0,0,0.28);
+    border-radius: 0.3rem;
+    padding: 0.4rem 0;
+  }
+  .cassette-box .reel {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255,253,199,0.65) 0 10deg, transparent 10deg 20deg);
+    box-shadow: inset 0 0 0 3px rgba(0,0,0,0.5);
+  }
+  .cassette-box .label {
+    background: var(--vintage-sky);
+    color: var(--ink);
+    border-radius: 0.25rem;
+    padding: 0.3rem 0.4rem;
+  }
+  .cassette-box .label .title {
+    font-family: var(--font-display);
+    font-size: 0.72rem; font-weight: 600; line-height: 1.15;
+  }
+  .cassette-box .label .sides {
+    font-size: 0.58rem; opacity: 0.65; margin-top: 0.1rem;
+  }
+
+  /* ===== SCREEN 2: open cassette, lado a / lado b ===== */
+  .cassette-hero {
+    margin: 0.3rem 1.3rem 0;
+    border-radius: 0.7rem;
+    padding: 0.9rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+  .cassette-hero .reels {
+    display: flex; justify-content: space-evenly; align-items: center;
+    background: rgba(0,0,0,0.28); border-radius: 0.4rem; padding: 0.9rem 0;
+  }
+  .cassette-hero .reel {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255,253,199,0.7) 0 10deg, transparent 10deg 20deg);
+    box-shadow: inset 0 0 0 5px rgba(0,0,0,0.5);
+  }
+  .cassette-hero .hero-label {
+    text-align: center; margin-top: 0.7rem;
+  }
+  .cassette-hero .hero-label h2 {
+    margin: 0; font-size: 1.15rem; color: var(--ink);
+  }
+  .cassette-hero .hero-label .loc {
+    font-size: 0.68rem; color: var(--ink); opacity: 0.65; margin-top: 0.1rem;
+  }
+
+  .side-toggle {
+    display: flex; gap: 0.5rem;
+    margin: 1rem 1.3rem 0.2rem;
+    flex-shrink: 0;
+  }
+  .side-toggle button {
+    flex: 1;
+    background: rgba(255,253,199,0.08);
+    border: 1px solid rgba(255,253,199,0.18);
+    color: var(--vintage-sky);
+    border-radius: 999px;
+    padding: 0.55rem 0;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .side-toggle button.active {
+    background: var(--polaroid-sunset);
+    color: var(--ink);
+    border-color: var(--polaroid-sunset);
+  }
+
+  .tracklist {
+    padding: 0.8rem 1.3rem 2rem;
+  }
+  .track-row {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.7rem 0.2rem;
+    border-bottom: 1px solid rgba(255,253,199,0.1);
+    cursor: pointer;
+  }
+  .track-row .num {
+    width: 1.4rem; font-size: 0.78rem; opacity: 0.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .track-row .meta { flex: 1; }
+  .track-row .meta .t-title { font-size: 0.92rem; }
+  .track-row .meta .t-loc { font-size: 0.68rem; opacity: 0.55; margin-top: 0.1rem; }
+  .track-row .dur { font-size: 0.75rem; opacity: 0.55; font-variant-numeric: tabular-nums; }
+  .track-row .play-mini {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(255,253,199,0.1);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .track-row .play-mini svg { width: 11px; height: 11px; fill: var(--vintage-sky); margin-left: 1px; }
+  .track-row:active { background: rgba(255,253,199,0.06); }
+
+  /* ===== SCREEN 3: player (same as before) ===== */
+  .video-wrap {
+    position: relative; margin: 0.25rem 1.1rem 0;
+    border-radius: 0.9rem; overflow: hidden; aspect-ratio: 16/10;
+    background: radial-gradient(circle at 30% 20%, #3a2a20, #0d0906 75%);
+    box-shadow: inset 0 0 0 2px rgba(255,253,199,0.15), 0 10px 24px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+  .video-wrap .scanline {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0 1px, transparent 1px 3px);
+    mix-blend-mode: overlay; opacity: 0.4; pointer-events: none;
+  }
+  .video-wrap .placeholder-scene {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 0.4rem; color: rgba(255,253,199,0.55);
+  }
+  .video-wrap .placeholder-scene svg { width: 46px; height: 46px; opacity: 0.6; }
+  .video-wrap .placeholder-scene span { font-size: 0.68rem; letter-spacing: 0.05em; }
+  .rec-badge {
+    position: absolute; top: 0.6rem; left: 0.7rem;
+    display: flex; align-items: center; gap: 0.3rem;
+    font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--view-master); background: rgba(0,0,0,0.35);
+    padding: 0.2rem 0.5rem 0.2rem 0.35rem; border-radius: 999px;
+  }
+  .rec-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--view-master); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+  .fullscreen-btn {
+    position: absolute; bottom: 0.6rem; right: 0.6rem;
+    width: 34px; height: 34px; background: rgba(0,0,0,0.45);
+    border: none; border-radius: 50%; color: var(--vintage-sky);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .fullscreen-btn svg { width: 16px; height: 16px; }
+  .tap-play-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.25); cursor: pointer;
+  }
+  .tap-play-overlay .big-play {
+    width: 58px; height: 58px; border-radius: 50%; background: var(--view-master);
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  }
+  .tap-play-overlay .big-play svg { width: 22px; height: 22px; margin-left: 3px; fill: #fff; }
+  .tap-play-overlay.hidden { display: none; }
+  .track-info { padding: 1rem 1.3rem 0.2rem; flex-shrink: 0; }
+  .track-info .eyebrow { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--retro-pop); margin-bottom: 0.2rem; }
+  .track-info h2 { margin: 0; font-size: 1.3rem; }
+  .track-info .loc { font-size: 0.78rem; opacity: 0.6; margin-top: 0.15rem; }
+  .scrub-wrap { padding: 0.9rem 1.3rem 0; flex-shrink: 0; }
+  .scrub-bar { position: relative; height: 5px; border-radius: 999px; background: rgba(255,253,199,0.18); cursor: pointer; }
+  .scrub-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 32%; border-radius: 999px; background: var(--polaroid-sunset); }
+  .scrub-fill::after { content: ""; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; border-radius: 50%; background: var(--vintage-sky); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+  .time-row { display: flex; justify-content: space-between; font-size: 0.65rem; opacity: 0.55; margin-top: 0.4rem; font-variant-numeric: tabular-nums; }
+  .controls { display: flex; align-items: center; justify-content: center; gap: 1.4rem; padding: 1rem 1rem 0.4rem; flex-shrink: 0; }
+  .controls button { background: none; border: none; color: var(--vintage-sky); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.85; }
+  .controls button svg { width: 22px; height: 22px; }
+  .controls .play-pause { width: 58px; height: 58px; border-radius: 50%; background: var(--vintage-sky); color: var(--ink); }
+  .controls .play-pause svg { width: 24px; height: 24px; fill: var(--ink); }
+  .controls .secondary svg { width: 18px; height: 18px; opacity: 0.85; color: color-mix(in srgb, var(--stereo-blue) 70%, var(--vintage-sky)); }
+  .lyrics-toggle {
+    margin: 0.6rem 1.3rem 0; display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+    background: rgba(255,253,199,0.08); border: 1px solid rgba(255,253,199,0.18); border-radius: 999px;
+    padding: 0.5rem 0; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: lowercase;
+    color: var(--vintage-sky); cursor: pointer; flex-shrink: 0;
+  }
+  .lyrics-toggle svg { width: 13px; height: 13px; transition: transform 0.25s; }
+  .lyrics-toggle.open svg { transform: rotate(180deg); }
+  .lyrics-drawer {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #1b120d 0%, #0c0806 100%);
+    border-top-left-radius: 1.4rem; border-top-right-radius: 1.4rem;
+    box-shadow: 0 -12px 30px rgba(0,0,0,0.55);
+    transform: translateY(100%); transition: transform 0.32s cubic-bezier(.2,.8,.3,1);
+    height: 78%; display: flex; flex-direction: column;
+  }
+  .lyrics-drawer.open { transform: translateY(0%); }
+  .lyrics-drawer .handle { width: 36px; height: 4px; border-radius: 999px; background: rgba(255,253,199,0.3); margin: 0.7rem auto 0.3rem; flex-shrink: 0; }
+  .lyrics-drawer .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 0.3rem 1.3rem 0.6rem; flex-shrink: 0; border-bottom: 1px solid rgba(255,253,199,0.08); }
+  .lyrics-drawer .drawer-head h3 { margin: 0; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: lowercase; color: var(--retro-pop); }
+  .lyrics-drawer .drawer-head button { background: none; border: none; color: var(--vintage-sky); opacity: 0.6; font-size: 1.1rem; cursor: pointer; }
+  .lyrics-body { padding: 1.2rem 1.5rem 2rem; overflow-y: auto; font-family: 'Montserrat', Arial, sans-serif; font-size: 1.05rem; line-height: 2.1; }
+  .lyrics-body .line { opacity: 0.42; transition: opacity 0.2s, color 0.2s; }
+  .lyrics-body .line.active { opacity: 1; color: var(--polaroid-sunset); font-weight: 600; }
+  .lyrics-note { margin: 0 1.5rem 1rem; font-family: Arial, sans-serif; font-size: 0.68rem; opacity: 0.45; line-height: 1.5; }
+
+  .caption { max-width: 420px; margin: 0 auto 3rem; font-family: Arial, sans-serif; font-size: 0.8rem; color: #999; text-align: center; padding: 0 1rem; line-height: 1.6; }
+  .caption b { color: #ddd; }
+</style>
+</head>
+<body>
+
+  <div class="phone-frame">
+    <div class="app" id="app">
+
+      <!-- SCREEN 1: shelf -->
+      <div class="screen active" id="screenShelf">
+        <div class="topbar"><span></span><span>lado a / lado b</span><span></span></div>
+        <h2 class="shelf-title">nuestras cintas</h2>
+        <p class="shelf-sub">tocá un cassette para ver las canciones</p>
+        <div class="cassette-grid" id="cassetteGrid"></div>
+      </div>
+
+      <!-- SCREEN 2: open cassette -->
+      <div class="screen" id="screenCassette">
+        <div class="topbar">
+          <button id="backToShelf" aria-label="volver">‹</button>
+          <span id="cassetteEyebrow">cassette</span>
+          <span></span>
+        </div>
+        <div class="cassette-hero" id="cassetteHero">
+          <div class="reels"><div class="reel"></div><div class="reel"></div></div>
+          <div class="hero-label">
+            <h2 id="cassetteTitle">—</h2>
+            <div class="loc" id="cassetteLoc">—</div>
+          </div>
+        </div>
+        <div class="side-toggle">
+          <button class="active" id="sideABtn">lado a</button>
+          <button id="sideBBtn">lado b</button>
+        </div>
+        <div class="tracklist" id="tracklist"></div>
+      </div>
+
+      <!-- SCREEN 3: player -->
+      <div class="screen" id="screenPlayer">
+        <div class="topbar">
+          <button id="backToCassette" aria-label="volver">‹</button>
+          <span>reproduciendo desde las cintas</span>
+          <button aria-label="más">⋯</button>
+        </div>
+        <div class="video-wrap" id="videoWrap">
+          <div class="scanline"></div>
+          <div class="placeholder-scene">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m21 8-5 3 5 3z"/></svg>
+            <span id="videoPlaceholderLabel">video (placeholder)</span>
+          </div>
+          <div class="rec-badge"><span class="dot"></span> en vivo · locación</div>
+          <button class="fullscreen-btn" id="fsBtn" aria-label="pantalla completa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+          <div class="tap-play-overlay" id="tapOverlay">
+            <div class="big-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+        </div>
+        <div class="track-info">
+          <div class="eyebrow">audiocassettes</div>
+          <h2 id="playerTitle">—</h2>
+          <div class="loc" id="playerLoc">—</div>
+        </div>
+        <div class="scrub-wrap">
+          <div class="scrub-bar"><div class="scrub-fill"></div></div>
+          <div class="time-row"><span>1:12</span><span id="playerDur">3:41</span></div>
+        </div>
+        <div class="controls">
+          <button class="secondary" aria-label="anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-8.5-6z"/></svg></button>
+          <button class="play-pause" id="playBtn" aria-label="pausa"><svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+          <button class="secondary" aria-label="siguiente"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6v12l8.5-6z"/></svg></button>
+        </div>
+        <div class="lyrics-toggle" id="lyricsToggle"><span>letras</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="lyrics-drawer" id="lyricsDrawer">
+          <div class="handle"></div>
+          <div class="drawer-head"><h3 id="lyricsDrawerTitle">letras</h3><button id="closeDrawer" aria-label="cerrar">✕</button></div>
+          <div class="lyrics-body">
+            <p class="line">bajo el cielo abierto, cerca de la cima</p>
+            <p class="line active">grabamos lo que siente esta guitarra</p>
+            <p class="line">el viento se lleva la letra a otro lado</p>
+            <p class="line">y el cassette guarda lo que nunca dijimos</p>
+            <p class="line">&nbsp;</p>
+            <p class="line">rebobiná si querés, volvé al principio</p>
+            <p class="line">esta cinta no se acaba, solo cambia de lado</p>
+          </div>
+          <p class="lyrics-note">Letra de ejemplo — mismo panel simple ya visto, sin sincronización por ahora.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="caption">
+    <b>Demo (v4)</b> — ahora el flujo completo: la sección de "lado a / lado b" muestra cassettes cerrados; tocás uno y se abre mostrando lado A / lado B con su lista de canciones; tocás una canción y se abre el reproductor ya visto. El botón "‹" en cada pantalla regresa un paso. Todo con datos de ejemplo.
+  </p>
+
+<script>
+  const CASSETTES = [
+    {
+      id: 'cerro', title: 'grabaciones — cerro chirripó', loc: 'las cintas · locación 1', color: 'var(--view-master)',
+      a: [
+        { title: 'Rewind (en el cerro)', loc: 'cerro chirripó', dur: '3:41' },
+        { title: 'Altura', loc: 'cerro chirripó', dur: '2:58' },
+      ],
+      b: [
+        { title: 'Niebla', loc: 'cerro chirripó', dur: '4:05' },
+      ],
+    },
+    {
+      id: 'playa', title: 'grabaciones — guanacaste', loc: 'las cintas · locación 2', color: 'var(--retro-pop)',
+      a: [
+        { title: 'Marea', loc: 'guanacaste', dur: '3:12' },
+      ],
+      b: [
+        { title: 'Sal y sol', loc: 'guanacaste', dur: '3:33' },
+        { title: 'Vuelta a casa', loc: 'guanacaste', dur: '2:47' },
+      ],
+    },
+    {
+      id: 'ciudad', title: 'grabaciones — san josé', loc: 'las cintas · locación 3', color: 'var(--stereo-blue)',
+      a: [
+        { title: 'Casa de amigos', loc: 'san josé', dur: '3:02' },
+      ],
+      b: [
+        { title: 'Luces de neón', loc: 'san josé', dur: '3:50' },
+      ],
+    },
+    {
+      id: 'bosque', title: 'grabaciones — monteverde', loc: 'las cintas · locación 4', color: 'var(--polaroid-sunset)',
+      a: [
+        { title: 'Verde', loc: 'monteverde', dur: '3:20' },
+      ],
+      b: [
+        { title: 'Camino angosto', loc: 'monteverde', dur: '2:55' },
+      ],
+    },
+  ];
+
+  const grid = document.getElementById('cassetteGrid');
+  CASSETTES.forEach(c => {
+    const box = document.createElement('div');
+    box.className = 'cassette-box';
+    box.style.background = c.color;
+    box.innerHTML = `
+      <div class="reels"><div class="reel"></div><div class="reel"></div></div>
+      <div class="label">
+        <div class="title">${c.title}</div>
+        <div class="sides">lado a / lado b</div>
+      </div>
+    `;
+    box.addEventListener('click', () => openCassette(c));
+    grid.appendChild(box);
+  });
+
+  const screenShelf = document.getElementById('screenShelf');
+  const screenCassette = document.getElementById('screenCassette');
+  const screenPlayer = document.getElementById('screenPlayer');
+
+  function showScreen(el) {
+    [screenShelf, screenCassette, screenPlayer].forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  let currentCassette = null;
+  let currentSide = 'a';
+
+  function openCassette(c) {
+    currentCassette = c;
+    currentSide = 'a';
+    document.getElementById('cassetteEyebrow').textContent = c.title;
+    document.getElementById('cassetteTitle').textContent = c.title;
+    document.getElementById('cassetteLoc').textContent = c.loc;
+    document.getElementById('cassetteHero').style.background = c.color;
+    renderSide();
+    showScreen(screenCassette);
+  }
+
+  function renderSide() {
+    document.getElementById('sideABtn').classList.toggle('active', currentSide === 'a');
+    document.getElementById('sideBBtn').classList.toggle('active', currentSide === 'b');
+    const list = document.getElementById('tracklist');
+    list.innerHTML = '';
+    currentCassette[currentSide].forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'track-row';
+      row.innerHTML = `
+        <div class="num">${i + 1}</div>
+        <div class="meta"><div class="t-title">${t.title}</div><div class="t-loc">${t.loc}</div></div>
+        <div class="dur">${t.dur}</div>
+        <div class="play-mini"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      `;
+      row.addEventListener('click', () => openPlayer(t, currentCassette));
+      list.appendChild(row);
+    });
+  }
+  document.getElementById('sideABtn').addEventListener('click', () => { currentSide = 'a'; renderSide(); });
+  document.getElementById('sideBBtn').addEventListener('click', () => { currentSide = 'b'; renderSide(); });
+  document.getElementById('backToShelf').addEventListener('click', () => showScreen(screenShelf));
+  document.getElementById('backToCassette').addEventListener('click', () => showScreen(screenCassette));
+
+  function openPlayer(track, cassette) {
+    document.getElementById('playerTitle').textContent = track.title;
+    document.getElementById('playerLoc').textContent = `grabado en ${track.loc} · las cintas`;
+    document.getElementById('playerDur').textContent = track.dur;
+    document.getElementById('videoPlaceholderLabel').textContent = `video: ${track.loc} (placeholder)`;
+    document.getElementById('lyricsDrawerTitle').textContent = `letras — ${track.title}`;
+    showScreen(screenPlayer);
+  }
+
+  // player controls (same behavior as before)
+  const playBtn = document.getElementById('playBtn');
+  const playIcon = document.getElementById('playIcon');
+  const tapOverlay = document.getElementById('tapOverlay');
+  const lyricsToggle = document.getElementById('lyricsToggle');
+  const lyricsDrawer = document.getElementById('lyricsDrawer');
+  const closeDrawer = document.getElementById('closeDrawer');
+  const fsBtn = document.getElementById('fsBtn');
+  const app = document.getElementById('app');
+
+  let playing = true;
+  function setPlaying(p) {
+    playing = p;
+    playIcon.innerHTML = playing ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    tapOverlay.classList.toggle('hidden', playing);
+  }
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  tapOverlay.addEventListener('click', () => setPlaying(true));
+  setPlaying(true);
+
+  lyricsToggle.addEventListener('click', () => { lyricsDrawer.classList.add('open'); lyricsToggle.classList.add('open'); });
+  closeDrawer.addEventListener('click', () => { lyricsDrawer.classList.remove('open'); lyricsToggle.classList.remove('open'); });
+
+  fsBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) app.requestFullscreen?.().catch(() => {});
+    else document.exitFullscreen?.();
+  });
+</script>
+</body>
+</html>
