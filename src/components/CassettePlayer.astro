@@ -717,8 +717,8 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
 
   .cst-carousel {
     position: relative;
-    width: 18.5rem;
-    height: 20rem;
+    width: 15.725rem;
+    height: 17rem;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.3, 0.7, 0.3, 1);
     cursor: grab;
@@ -755,16 +755,16 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
   }
 
   .cst-face-0 {
-    transform: rotateY(0deg) translateZ(9.25rem);
+    transform: rotateY(0deg) translateZ(7.8625rem);
   }
   .cst-face-1 {
-    transform: rotateY(90deg) translateZ(9.25rem);
+    transform: rotateY(90deg) translateZ(7.8625rem);
   }
   .cst-face-2 {
-    transform: rotateY(180deg) translateZ(9.25rem);
+    transform: rotateY(180deg) translateZ(7.8625rem);
   }
   .cst-face-3 {
-    transform: rotateY(270deg) translateZ(9.25rem);
+    transform: rotateY(270deg) translateZ(7.8625rem);
   }
 
   .cst-face-label {
@@ -1012,6 +1012,35 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       width: 4.35rem;
       height: 1.25rem;
       top: -0.62rem;
+    }
+  }
+
+  /* Mission 23: Mission 22's short-viewport-height fix only lives inside
+     the mobile-WIDTH media query above, so it does nothing for a normal
+     desktop/tablet width with a short browser window (a visitor who
+     hasn't maximized their browser, or a smaller laptop screen) --
+     .cst-card's height is still min(44rem, 82vh), still viewport-height
+     -driven, but the *default* (non-mobile) carousel size above doesn't
+     respond to that at all. Confirmed by measurement: at 1440x700 the
+     gap between .cst-carousel-controls and .cst-card's bottom edge was
+     only ~22px (down from ~150px at 900px tall), and would go negative
+     on a shorter window still -- see MISSION_23_response.md. Scoped
+     with min-width so this never overlaps/interacts with the
+     mobile-width query above (that one keeps handling mobile short
+     heights on its own, untouched by this rule) -- only shrinks
+     .cst-carousel-stage's/.cst-carousel's HEIGHT (not width or
+     translateZ, which are unrelated to a short-*height* problem and
+     already fixed for horizontal card-edge clearance above). Threshold
+     and value picked empirically: verified a comfortable, clearly
+     positive gap down to a realistic short desktop window height, while
+     confirming the already-generous 900px/800px-tall cases (well above
+     the threshold) are completely untouched. */
+  @media (min-width: 26.3125rem) and (max-height: 45rem) {
+    .cst-carousel-stage {
+      height: 15rem;
+    }
+    .cst-carousel {
+      height: 11rem;
     }
   }
 
