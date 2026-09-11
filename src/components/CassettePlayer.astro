@@ -334,6 +334,20 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
              track with a videoId is opened. Every other track keeps
              showing the placeholder scene below exactly as before. -->
         <div class="cst-yt-host" id="cstYtHost" hidden></div>
+        <!-- Mission 19: an always-present click-shield over the real
+             video, shown/hidden in lockstep with #cstYtHost (never
+             during a placeholder track). Unlike #cstTapOverlay below,
+             this one does NOT disappear once playback starts -- its
+             whole purpose is blocking direct interaction with
+             YouTube's own iframe (hover/click controls that bypass
+             this app entirely and desync it from the audio), which is
+             exactly the gap #cstTapOverlay's disappearance leaves
+             open. Positioned in the DOM right after #cstYtHost (above
+             the iframe) but before the rec badge / fullscreen button /
+             tap overlay (so those three stay on top and clickable) --
+             same DOM-order-based stacking this file already uses
+             everywhere else, no z-index needed. -->
+        <div class="cst-video-shield" id="cstVideoShield" hidden></div>
         <div class="cst-placeholder-scene" id="cstPlaceholderScene">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
             <path d="M3 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -850,6 +864,28 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
   }
 
   .cst-yt-host[hidden] {
+    display: none;
+  }
+
+  /* Mission 19: transparent, always-on (while a video is loaded)
+     click-shield -- see the markup comment above for why this is a
+     separate element from #cstTapOverlay. `pointer-events: auto` is
+     the default for a plain div, stated explicitly here since it's
+     the entire point of this element's existence. No `display`
+     property is set (nothing needs laying out inside it), so the
+     `[hidden]` override below is technically not required by the
+     cascade bug this file has hit before (Missions 03/08/12/16/17) --
+     included anyway for consistency with every other [hidden]-toggled
+     element here and as cheap insurance against a future edit adding
+     one. */
+  .cst-video-shield {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto;
+    cursor: default;
+  }
+
+  .cst-video-shield[hidden] {
     display: none;
   }
 
@@ -1466,6 +1502,25 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
 
     const placeholderScene = root.querySelector<HTMLElement>("#cstPlaceholderScene");
 
+    // Mission 19: swallow every click/tap aimed at the real video --
+    // "no other action" per the mission's own wording. The shield
+    // being on top in the DOM already stops the click from ever
+    // reaching the iframe's own content (a separate browsing context;
+    // there is nothing to "propagate down into" in the normal DOM
+    // sense), so this handler is defensive insurance against anything
+    // else that might otherwise react to the click bubbling further
+    // up this document -- not required for the core fix to work, but
+    // exactly what was asked for. Both event types are listened for
+    // since Mission 18 established Pointer Events as this file's one
+    // code path for mouse and touch alike.
+    const videoShield = root.querySelector<HTMLElement>("#cstVideoShield");
+    function swallowVideoShieldEvent(e: Event) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    videoShield?.addEventListener("pointerdown", swallowVideoShieldEvent);
+    videoShield?.addEventListener("click", swallowVideoShieldEvent);
+
     function applyVideoPlayback(shouldPlay: boolean) {
       if (!ytPlayer || !ytPlayerReady) return;
       try {
@@ -1492,6 +1547,7 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       currentVideoId = videoId;
       currentVideoOffset = offset;
       getYtHostEl()?.removeAttribute("hidden");
+      videoShield?.removeAttribute("hidden");
       placeholderScene?.setAttribute("hidden", "");
       ensureYtApiLoaded(() => {
         // The user may have switched tracks (or left this page) while
@@ -1559,6 +1615,7 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
             // stated verification limit) -- fall back to the
             // placeholder rather than leaving a blank box.
             hostEl.setAttribute("hidden", "");
+            videoShield?.setAttribute("hidden", "");
             placeholderScene?.removeAttribute("hidden");
           }
         } else if (ytPlayerReady) {
@@ -1572,6 +1629,7 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     function closeVideoForTrack() {
       currentVideoId = null;
       getYtHostEl()?.setAttribute("hidden", "");
+      videoShield?.setAttribute("hidden", "");
       placeholderScene?.removeAttribute("hidden");
       applyVideoPlayback(false);
     }
