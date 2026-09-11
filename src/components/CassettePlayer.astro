@@ -62,6 +62,13 @@ interface Track {
   /** Mission 16: only "Tarde En La Mañana" and "El Ayer" have this so
    *  far. Every real-audio code path below is guarded on its presence. */
   audioSrc?: string;
+  /** Mission 17: only "Tarde En La Mañana" has these so far — the
+   *  video's own soundtrack starts 2.8s later than our uploaded audio,
+   *  so the muted video is kept seeked/synced to `audio.currentTime +
+   *  videoOffset` rather than driving playback itself. Every video
+   *  code path below is guarded on `videoId`'s presence. */
+  videoId?: string;
+  videoOffset?: number;
 }
 
 interface Cassette {
@@ -260,6 +267,8 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
                   data-loc={t.loc}
                   data-dur={t.dur}
                   data-audio-src={t.audioSrc}
+                  data-video-id={t.videoId}
+                  data-video-offset={t.videoOffset}
                   data-cassette-title={c.title}
                   data-lyrics-key={lyricsKeyFor(i, "a", ti)}
                 >
@@ -286,6 +295,8 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
                   data-loc={t.loc}
                   data-dur={t.dur}
                   data-audio-src={t.audioSrc}
+                  data-video-id={t.videoId}
+                  data-video-offset={t.videoOffset}
                   data-cassette-title={c.title}
                   data-lyrics-key={lyricsKeyFor(i, "b", ti)}
                 >
@@ -317,7 +328,13 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       </div>
       <div class="cst-video-wrap" id="cstVideoWrap">
         <div class="cst-scanline"></div>
-        <div class="cst-placeholder-scene">
+        <!-- Mission 17: a single reused YouTube player host (same
+             "one reused instance, not recreated per click" pattern as
+             Mission 16's <audio> element) -- hidden/empty until a
+             track with a videoId is opened. Every other track keeps
+             showing the placeholder scene below exactly as before. -->
+        <div class="cst-yt-host" id="cstYtHost" hidden></div>
+        <div class="cst-placeholder-scene" id="cstPlaceholderScene">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
             <path d="M3 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <path d="m21 8-5 3 5 3z" />
@@ -788,6 +805,29 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     pointer-events: none;
   }
 
+  /* Mission 17: a single reused YouTube player host, shown in place of
+     the placeholder scene only for a track with a videoId -- both are
+     now [hidden]-toggled, so both need the explicit override below
+     (the established fix, Missions 03/08/12/16, for the real cascade
+     bug where an unconditional author `display` rule beats the UA's
+     `[hidden]{display:none}` regardless of specificity). */
+  .cst-yt-host {
+    position: absolute;
+    inset: 0;
+  }
+
+  .cst-yt-host[hidden] {
+    display: none;
+  }
+
+  .cst-yt-host iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
   .cst-placeholder-scene {
     position: absolute;
     inset: 0;
@@ -797,6 +837,10 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     flex-direction: column;
     gap: 0.4rem;
     color: color-mix(in srgb, var(--vintage-sky) 55%, transparent);
+  }
+
+  .cst-placeholder-scene[hidden] {
+    display: none;
   }
 
   .cst-placeholder-scene svg {
@@ -1168,6 +1212,41 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
 </style>
 
 <script>
+  // Mission 17: the official YouTube IFrame Player API loader --
+  // https://www.youtube.com/iframe_api, the standard/only supported
+  // mechanism for embedding a scriptable YouTube video (same category
+  // as this project already loading Google Fonts via a <link> tag;
+  // not an npm dependency or a copied snippet -- see
+  // MISSION_17_response.md). Declared at the script's top level (not
+  // inside initCassettePlayer) so it and `window.YT` survive Astro's
+  // soft navigations within the same tab -- the script tag is only
+  // ever injected once per page load, and `onReady` callbacks queued
+  // while it's still loading are flushed once, in order.
+  let ytApiLoadStarted = false;
+  let ytApiReadyCallbacks: Array<() => void> = [];
+  let currentVisibilityHandler: (() => void) | null = null;
+
+  function ensureYtApiLoaded(onReady: () => void) {
+    const w = window as any;
+    if (w.YT && w.YT.Player) {
+      onReady();
+      return;
+    }
+    ytApiReadyCallbacks.push(onReady);
+    if (ytApiLoadStarted) return;
+    ytApiLoadStarted = true;
+    const previous = w.onYouTubeIframeAPIReady;
+    w.onYouTubeIframeAPIReady = () => {
+      previous?.();
+      const callbacks = ytApiReadyCallbacks;
+      ytApiReadyCallbacks = [];
+      callbacks.forEach((cb) => cb());
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }
+
   // Mission 14: shelf -> cassette -> player flow. Ported from the
   // reference's own JS structure: showScreen() only ever toggles
   // `.is-active` (see the .is-behind CSS-rule comment above for why).
@@ -1304,6 +1383,123 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     let currentTrackHasAudio = false;
     let currentTrackKey: string | null = null;
 
+    // Mission 17: real-video state -- only meaningful while a track
+    // with videoId is loaded. `ytPlayer` is a single reused instance
+    // (same pattern as `audioEl`), created lazily the first time a
+    // video track is actually opened.
+    let ytPlayer: any = null;
+    let ytPlayerReady = false;
+    let currentVideoId: string | null = null;
+    let currentVideoOffset = 0;
+
+    const ytHost = root.querySelector<HTMLElement>("#cstYtHost");
+    const placeholderScene = root.querySelector<HTMLElement>("#cstPlaceholderScene");
+
+    function applyVideoPlayback(shouldPlay: boolean) {
+      if (!ytPlayer || !ytPlayerReady) return;
+      try {
+        if (shouldPlay) ytPlayer.playVideo();
+        else ytPlayer.pauseVideo();
+      } catch {
+        // This mission's sandbox cannot reach youtube.com to exercise
+        // the real IFrame API (stated verification limit, Rule 2) --
+        // guarded defensively rather than assumed safe in every state
+        // the live player might be in.
+      }
+    }
+
+    function resyncVideoToAudio() {
+      if (!ytPlayer || !ytPlayerReady || !audioEl) return;
+      try {
+        ytPlayer.seekTo(audioEl.currentTime + currentVideoOffset, true);
+      } catch {
+        // See applyVideoPlayback's comment.
+      }
+    }
+
+    function openVideoForTrack(videoId: string, offset: number) {
+      currentVideoId = videoId;
+      currentVideoOffset = offset;
+      ytHost?.removeAttribute("hidden");
+      placeholderScene?.setAttribute("hidden", "");
+      ensureYtApiLoaded(() => {
+        // The user may have switched tracks (or left this page) while
+        // the API was still loading -- only proceed if this video is
+        // still the one actually open.
+        if (currentVideoId !== videoId || !ytHost) return;
+        if (!ytPlayer) {
+          try {
+            ytPlayer = new (window as any).YT.Player(ytHost, {
+              videoId,
+              playerVars: {
+                mute: 1,
+                controls: 0,
+                disablekb: 1,
+                modestbranding: 1,
+                playsinline: 1,
+                rel: 0,
+              },
+              events: {
+                onReady: () => {
+                  ytPlayerReady = true;
+                  try {
+                    ytPlayer.mute();
+                  } catch {
+                    // See applyVideoPlayback's comment.
+                  }
+                  resyncVideoToAudio();
+                  applyVideoPlayback(!!audioEl && !audioEl.paused);
+                },
+              },
+            });
+          } catch {
+            // Construction failed for some reason this sandbox can't
+            // reproduce (network-restricted, per the mission's own
+            // stated verification limit) -- fall back to the
+            // placeholder rather than leaving a blank box.
+            ytHost?.setAttribute("hidden", "");
+            placeholderScene?.removeAttribute("hidden");
+          }
+        } else if (ytPlayerReady) {
+          resyncVideoToAudio();
+          applyVideoPlayback(!!audioEl && !audioEl.paused);
+        }
+      });
+    }
+
+    function closeVideoForTrack() {
+      currentVideoId = null;
+      ytHost?.setAttribute("hidden", "");
+      placeholderScene?.removeAttribute("hidden");
+      applyVideoPlayback(false);
+    }
+
+    // Mission 17: pausing/resuming the video on tab visibility change
+    // -- the audio itself is untouched here (it's meant to keep
+    // playing in the background, per Mission 16); only the (otherwise
+    // browser-throttled-anyway) video iframe is paused while hidden,
+    // then re-seeked to wherever the audio has gotten to before
+    // resuming, rather than blindly resuming from its stale position.
+    // Closes over this init's own ytPlayer/audioEl, so the previous
+    // init's handler (closing over a torn-down instance) is removed
+    // first -- the same dedup need as Mission 12's resize listener,
+    // just via a per-init function reference since this one can't be
+    // a stable top-level function like that one was.
+    function handleVisibilityChange() {
+      if (!currentVideoId || !ytPlayer || !ytPlayerReady) return;
+      if (document.hidden) {
+        applyVideoPlayback(false);
+      } else if (audioEl && !audioEl.paused) {
+        resyncVideoToAudio();
+        applyVideoPlayback(true);
+      }
+    }
+    if (currentVisibilityHandler) {
+      document.removeEventListener("visibilitychange", currentVisibilityHandler);
+    }
+    currentVisibilityHandler = handleVisibilityChange;
+    document.addEventListener("visibilitychange", currentVisibilityHandler);
+
     const realTrackRows = Array.from(
       root.querySelectorAll<HTMLButtonElement>(".cst-track-row[data-audio-src]"),
     );
@@ -1312,14 +1508,20 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       audioEl.addEventListener("play", () => {
         updatePlayIcon(true);
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+        // Mission 17: audio play/pause drives video play/pause from
+        // these exact same handlers -- not a forked second control
+        // path (mission's own explicit instruction).
+        if (currentVideoId) applyVideoPlayback(true);
       });
       audioEl.addEventListener("pause", () => {
         updatePlayIcon(false);
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+        if (currentVideoId) applyVideoPlayback(false);
       });
       audioEl.addEventListener("ended", () => {
         updatePlayIcon(false);
         if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+        if (currentVideoId) applyVideoPlayback(false);
       });
       audioEl.addEventListener("loadedmetadata", () => {
         if (currentTrackHasAudio && playerDur) playerDur.textContent = formatDuration(audioEl.duration);
@@ -1345,11 +1547,28 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
             // (e.g. right at track switch) -- not worth surfacing.
           }
         }
+        // Mission 17: correct drift without reseeking every tick --
+        // only once the gap between where the video (minus its
+        // offset) and the audio actually are exceeds the mission's
+        // stated 0.25s tolerance.
+        if (currentVideoId && ytPlayer && ytPlayerReady) {
+          try {
+            const videoTime = ytPlayer.getCurrentTime();
+            const drift = videoTime - currentVideoOffset - audioEl.currentTime;
+            if (Math.abs(drift) > 0.25) {
+              ytPlayer.seekTo(audioEl.currentTime + currentVideoOffset, true);
+            }
+          } catch {
+            // See applyVideoPlayback's comment.
+          }
+        }
       });
     }
 
     function openTrackFromRow(row: HTMLButtonElement) {
       const audioSrc = row.dataset.audioSrc;
+      const videoId = row.dataset.videoId;
+      const videoOffset = row.dataset.videoOffset ? parseFloat(row.dataset.videoOffset) : 0;
       const title = row.dataset.title ?? "";
       const loc = row.dataset.loc ?? "";
       const dur = row.dataset.dur ?? "";
@@ -1382,6 +1601,12 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
             album: cassetteTitle,
           });
         }
+        // Mission 17: only "Tarde En La Mañana" has a videoId right
+        // now -- every other real-audio track (currently "El Ayer")
+        // falls through to closeVideoForTrack(), keeping the
+        // placeholder scene exactly as Mission 14/15/16 shipped it.
+        if (videoId) openVideoForTrack(videoId, videoOffset);
+        else closeVideoForTrack();
       } else {
         // Placeholder track: Mission 14/15's exact visual-only
         // behavior, untouched -- and per scope item 7, switching to a
@@ -1398,6 +1623,7 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
         if (playerElapsed) playerElapsed.textContent = "1:12"; // Mission 14/15's static value
         if (scrubFill) scrubFill.style.width = ""; // clears inline width, reverts to the static 32% CSS default
         if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+        closeVideoForTrack();
       }
 
       showScreen(screenPlayer);

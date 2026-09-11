@@ -28,6 +28,15 @@ import CassettePlayer from "../components/CassettePlayer.astro";
  * this one cassette — Esteban only explicitly asked about lado A. If
  * he'd rather leave "Niebla" as "cerro chirripó" until it also gets
  * real audio, that's a one-line revert of this entry's `loc` value.
+ *
+ * Mission 17 (missions/MISSION_17_video-sync.md): "Tarde En La Mañana"
+ * only, adds `videoId` (the real, approved YouTube video) and
+ * `videoOffset` (2.8s — Esteban's own stated number after listening,
+ * not recomputed here) — the video's own soundtrack starts 2.8s later
+ * than our uploaded audio, so it plays muted and kept in sync against
+ * the real <audio> element (see CassettePlayer.astro). "El Ayer" and
+ * every placeholder track are untouched, still showing the placeholder
+ * video box exactly as Mission 14/15/16 built it.
  */
 const cassettes = [
   {
@@ -40,6 +49,8 @@ const cassettes = [
         loc: "Audiocassettes",
         dur: "5:06",
         audioSrc: "/audio/tarde-en-la-manana.mp3",
+        videoId: "4gBwAFS-iXs",
+        videoOffset: 2.8,
       },
       {
         title: "El Ayer",
