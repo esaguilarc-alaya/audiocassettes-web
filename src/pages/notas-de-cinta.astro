@@ -3,94 +3,123 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PageAccentBar from "../components/PageAccentBar.astro";
 ---
 
-<BaseLayout title="notas de cinta">
+<!--
+  Mission 12: renamed user-facing text "notas de cinta" -> "el librito".
+  Route/URL kept as /notas-de-cinta (this file's path) per the mission's
+  own stated preference when no route-change instruction was given and
+  no external-link concern was raised — see MISSION_12_response.md.
+
+  Visual shell below ports reference/el-librito-look-reference.html's
+  paper/accordion-booklet look. Every new color is derived from the six
+  established tokens (Brown Tape, Vintage Sky, View Master) via
+  color-mix(), or the black neutral the mission text itself names as a
+  usable precedent -- no invented hex values. See MISSION_12_response.md
+  for the exact derivation of each one against the reference's raw hex.
+-->
+<BaseLayout title="el librito">
   <section class="stub" style="--page-accent: var(--polaroid-sunset);">
-    <h1>notas de cinta</h1>
+    <h1>el librito</h1>
     <PageAccentBar />
-    <div class="bio">
-      <p>
-        En 1987 Ronald Reagan hacía de las suyas como presidente de Estados
-        Unidos, Óscar Arias celebraba su Nobel de la Paz, mientras miles de
-        costarricenses perdieron sus ahorros de la noche a la mañana con la
-        quiebra masiva de empresas financieras no bancarias... esa parte sí
-        suena muy 2026.
-      </p>
-      <p>
-        Pero bueno, los teléfonos tenían 6 dígitos y pocos hogares contaban
-        con teléfono propio — eso sí cambió.
-      </p>
-      <p>
-        La cosa es que ese año conocí a Gerson entrando a primer grado de
-        escuela. Ya para sexto grado éramos mejores amigos, y a los 13 años
-        decidimos tener nuestra banda de rock — el único problema es que no
-        sabíamos tocar ningún instrumento...
-      </p>
-      <p>
-        Así que bueno, lo resolvimos llevando clases de guitarra los dos a
-        la vez.
-      </p>
-      <p>
-        Pronto empezamos a crear nuestras propias canciones, letras. Mucho
-        de ese material lo tenemos guardado, en cassettes, en cuadernos
-        viejos, y muy a pesar de la juventud todavía encontramos sabiduría
-        ahí.
-      </p>
-      <p>
-        En nuestra época de colegio compartimos con más personas ese
-        interés, y de ahí conocimos gente con la que de una u otra forma
-        hemos compartido por el resto de nuestra vida.
-      </p>
-      <p>
-        Grabamos nuestras primeras canciones en estudio con Iván en la
-        guitarra y nuestro amigo y miembro honorario por siempre, Rolando,
-        en la batería.
-      </p>
-      <p>
-        En los últimos 20 años grabamos dos discos en estudio que todavía
-        no han sido oficialmente lanzados.
-      </p>
-      <p>
-        Tuvimos la oportunidad de conocer gran cantidad de músicos locales,
-        de los conocidos de la escena y de los desconocidos.
-      </p>
-      <p>
-        Compartimos banda con muchos nombres que solo voy a mencionar sin
-        apellido: Roberto, Alonso, Vladimir, Víctor, Erick, Chris,
-        Álvaro... algunos de ellos todavía en nuestra vida. Con todos nos
-        divertimos y compartimos el momento íntimo de crear, y por eso
-        eternamente agradecidos.
-      </p>
-      <p>
-        Hoy volvemos con una agrupación de viejos conocidos como Iván, una
-        dulzura de hombre, y un nuevo amigo que nos devolvió las ganas y la
-        paz: nuestro querido Cali.
-      </p>
-      <p>
-        Y así nos disponemos a empezar esta gira y finalmente compartir lo
-        que hemos creado durante tanto tiempo y con tantas personas lindas.
-        Gracias por estar por acá, nos vemos por ahí.
-      </p>
-      <footer class="bio-signature">— Esteban</footer>
+
+    <div class="booklet">
+      <div class="booklet-strip">
+        <div class="booklet-fold-corner" aria-hidden="true"></div>
+
+        <div class="booklet-section bio">
+          <p>
+            En 1987 Ronald Reagan hacía de las suyas como presidente de Estados
+            Unidos, Óscar Arias celebraba su Nobel de la Paz, mientras miles de
+            costarricenses perdieron sus ahorros de la noche a la mañana con la
+            quiebra masiva de empresas financieras no bancarias... esa parte sí
+            suena muy 2026.
+          </p>
+          <p>
+            Pero bueno, los teléfonos tenían 6 dígitos y pocos hogares contaban
+            con teléfono propio — eso sí cambió.
+          </p>
+          <p>
+            La cosa es que ese año conocí a Gerson entrando a primer grado de
+            escuela. Ya para sexto grado éramos mejores amigos, y a los 13 años
+            decidimos tener nuestra banda de rock — el único problema es que no
+            sabíamos tocar ningún instrumento...
+          </p>
+          <p>
+            Así que bueno, lo resolvimos llevando clases de guitarra los dos a
+            la vez.
+          </p>
+          <p>
+            Pronto empezamos a crear nuestras propias canciones, letras. Mucho
+            de ese material lo tenemos guardado, en cassettes, en cuadernos
+            viejos, y muy a pesar de la juventud todavía encontramos sabiduría
+            ahí.
+          </p>
+          <p>
+            En nuestra época de colegio compartimos con más personas ese
+            interés, y de ahí conocimos gente con la que de una u otra forma
+            hemos compartido por el resto de nuestra vida.
+          </p>
+          <p>
+            Grabamos nuestras primeras canciones en estudio con Iván en la
+            guitarra y nuestro amigo y miembro honorario por siempre, Rolando,
+            en la batería.
+          </p>
+          <p>
+            En los últimos 20 años grabamos dos discos en estudio que todavía
+            no han sido oficialmente lanzados.
+          </p>
+          <p>
+            Tuvimos la oportunidad de conocer gran cantidad de músicos locales,
+            de los conocidos de la escena y de los desconocidos.
+          </p>
+          <p>
+            Compartimos banda con muchos nombres que solo voy a mencionar sin
+            apellido: Roberto, Alonso, Vladimir, Víctor, Erick, Chris,
+            Álvaro... algunos de ellos todavía en nuestra vida. Con todos nos
+            divertimos y compartimos el momento íntimo de crear, y por eso
+            eternamente agradecidos.
+          </p>
+          <p>
+            Hoy volvemos con una agrupación de viejos conocidos como Iván, una
+            dulzura de hombre, y un nuevo amigo que nos devolvió las ganas y la
+            paz: nuestro querido Cali.
+          </p>
+          <p>
+            Y así nos disponemos a empezar esta gira y finalmente compartir lo
+            que hemos creado durante tanto tiempo y con tantas personas lindas.
+            Gracias por estar por acá, nos vemos por ahí.
+          </p>
+          <footer class="bio-signature">— Esteban</footer>
+        </div>
+
+        <div class="booklet-section">
+          <h2>quiénes somos hoy</h2>
+          <ul class="lineup-list">
+            <li><strong>Gerson</strong> — bajo y teclados</li>
+            <li><strong>Cali</strong> — batería</li>
+            <li><strong>Esteban</strong> — voz y guitarra</li>
+            <li><strong>Iván</strong> — guitarra</li>
+          </ul>
+        </div>
+
+        <div class="booklet-section">
+          <h2>amigos de audiocassettes</h2>
+          <p>
+            A través de los años compartimos banda con: Roberto, Alonso,
+            Vladimir, Víctor, Erick, Chris, Álvaro. Y Rolando nuestro
+            baterista en distintos periodos y nuestro amigo siempre.
+          </p>
+        </div>
+      </div>
+
+      <div class="booklet-spine">
+        <div class="booklet-spine__name">
+          <span class="booklet-spine__name-text">Audiocassettes</span>
+        </div>
+        <div class="booklet-spine__logo">
+          <span class="booklet-isologo" aria-hidden="true"></span>
+        </div>
+      </div>
     </div>
-
-    <section class="notas-section">
-      <h2>quiénes somos hoy</h2>
-      <ul class="lineup-list">
-        <li><strong>Gerson</strong> — bajo y teclados</li>
-        <li><strong>Cali</strong> — batería</li>
-        <li><strong>Esteban</strong> — voz y guitarra</li>
-        <li><strong>Iván</strong> — guitarra</li>
-      </ul>
-    </section>
-
-    <section class="notas-section">
-      <h2>amigos de audiocassettes</h2>
-      <p>
-        A través de los años compartimos banda con: Roberto, Alonso,
-        Vladimir, Víctor, Erick, Chris, Álvaro. Y Rolando nuestro
-        baterista en distintos periodos y nuestro amigo siempre.
-      </p>
-    </section>
   </section>
 </BaseLayout>
 
@@ -101,14 +130,92 @@ import PageAccentBar from "../components/PageAccentBar.astro";
     padding: var(--space-6) var(--space-4);
   }
 
-  .bio {
+  /* ===== Mission 12: paper/accordion-booklet shell =====
+     Colors below are all derived from the three established tokens this
+     mission names (Brown Tape, Vintage Sky, View Master) via color-mix(),
+     plus the black neutral the mission text itself sanctions as usable
+     ("the neutral/black precedent already used elsewhere"). None is a
+     raw invented hex -- see MISSION_12_response.md for the exact
+     correspondence to the reference file's literal values. */
+  .booklet {
+    --paper-base: color-mix(in srgb, var(--vintage-sky) 85%, var(--brown-tape) 15%);
+    --paper-corner: color-mix(in srgb, var(--vintage-sky) 75%, var(--brown-tape) 25%);
+    --paper-crease-dark: color-mix(in srgb, var(--brown-tape) 70%, black 30%);
+    --spine-name-top: color-mix(in srgb, var(--vintage-sky) 95%, var(--brown-tape) 5%);
+    --spine-name-bottom: color-mix(in srgb, var(--vintage-sky) 80%, var(--brown-tape) 20%);
+    --spine-logo-top: color-mix(in srgb, var(--view-master) 90%, var(--vintage-sky) 10%);
+    --spine-logo-bottom: color-mix(in srgb, var(--view-master) 75%, var(--brown-tape) 25%);
+
     max-width: 40rem;
-    margin-top: var(--space-4);
+    margin: var(--space-6) auto 0;
+    box-shadow: 0 16px 40px color-mix(in srgb, black 55%, transparent);
   }
 
-  .bio p {
+  /* The strip's own repeating fold-line pattern (background 6, below)
+     tiles every var(--panel-h). The dynamic script (bottom of file)
+     measures the real rendered content and picks a --panel-h so the
+     strip's total height divides evenly into panels AND the fold right
+     before the final panel lands before the "amigos de audiocassettes"
+     paragraph begins -- ported from the reference's algorithm. The
+     var(--panel-h, 320px) fallback only matters for the instant before
+     that script runs on first paint. */
+  .booklet-strip {
+    position: relative;
+    background-color: var(--paper-base);
+    padding: var(--space-5) var(--space-4) 0;
+    background-image:
+      repeating-linear-gradient(
+        115deg,
+        color-mix(in srgb, var(--brown-tape) 3%, transparent) 0px,
+        color-mix(in srgb, var(--brown-tape) 3%, transparent) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      radial-gradient(circle at 14% 8%, color-mix(in srgb, var(--brown-tape) 14%, transparent) 0, transparent 6%),
+      radial-gradient(circle at 85% 30%, color-mix(in srgb, var(--brown-tape) 12%, transparent) 0, transparent 5%),
+      radial-gradient(circle at 10% 62%, color-mix(in srgb, var(--brown-tape) 13%, transparent) 0, transparent 6%),
+      radial-gradient(circle at 90% 85%, color-mix(in srgb, var(--brown-tape) 11%, transparent) 0, transparent 5%),
+      repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent calc(var(--panel-h, 320px) - 7px),
+        color-mix(in srgb, var(--brown-tape) 5%, transparent) calc(var(--panel-h, 320px) - 7px),
+        color-mix(in srgb, var(--brown-tape) 22%, transparent) calc(var(--panel-h, 320px) - 1.5px),
+        color-mix(in srgb, var(--paper-crease-dark) 32%, transparent) var(--panel-h, 320px),
+        color-mix(in srgb, var(--brown-tape) 22%, transparent) calc(var(--panel-h, 320px) + 1.5px),
+        color-mix(in srgb, var(--brown-tape) 5%, transparent) calc(var(--panel-h, 320px) + 7px),
+        transparent calc(var(--panel-h, 320px) + 7px),
+        transparent var(--panel-h, 320px)
+      ),
+      radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--brown-tape) 10%, transparent) 100%);
+    background-size: auto, auto, auto, auto, auto, 100% var(--panel-h, 320px), auto;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat-y, no-repeat;
+  }
+
+  .booklet-fold-corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 30px 30px 0;
+    border-color: transparent var(--paper-corner) transparent transparent;
+    filter: drop-shadow(-2px 2px 3px color-mix(in srgb, black 25%, transparent));
+  }
+
+  .booklet-section {
+    padding-bottom: var(--space-4);
+  }
+
+  .booklet-section p {
     margin: 0 0 var(--space-4);
     line-height: 1.7;
+  }
+
+  .booklet-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-3);
   }
 
   .bio-signature {
@@ -116,26 +223,6 @@ import PageAccentBar from "../components/PageAccentBar.astro";
     font-family: var(--font-display);
     font-style: italic;
     opacity: 0.7;
-  }
-
-  /* Mission 11: two new content sections after the bio, reusing the
-     bio's own max-width/line-height rather than inventing a new type
-     scale. Headings pick up the site-wide h2 treatment (display font,
-     600 weight, lowercase) from global.css automatically — this only
-     adds spacing around them. */
-  .notas-section {
-    max-width: 40rem;
-    margin-top: var(--space-6);
-  }
-
-  .notas-section h2 {
-    font-size: 1.25rem;
-    margin-bottom: var(--space-3);
-  }
-
-  .notas-section p {
-    margin: 0;
-    line-height: 1.7;
   }
 
   .lineup-list {
@@ -154,4 +241,158 @@ import PageAccentBar from "../components/PageAccentBar.astro";
   .lineup-list strong {
     font-family: var(--font-display);
   }
+
+  /* ===== the final panel: one applied sticker/label, same width as the
+     strip, ~2/3 the height of a regular accordion panel, with its own
+     two printed registers (name / isologo) and fold-relief shadows
+     instead of flat color -- per the reference's spine treatment. ===== */
+  .booklet-spine {
+    position: relative;
+    height: calc(var(--panel-h, 320px) * 0.667);
+    margin: 0;
+    box-shadow:
+      0 2px 3px color-mix(in srgb, black 25%, transparent),
+      0 8px 18px color-mix(in srgb, black 35%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, black 15%, transparent);
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* register 1: thin band, band name */
+  .booklet-spine__name {
+    position: relative;
+    flex: 0 0 30%;
+    background: linear-gradient(180deg, var(--spine-name-top) 0%, var(--spine-name-bottom) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 -3px 6px -2px color-mix(in srgb, var(--brown-tape) 35%, transparent);
+  }
+
+  .booklet-spine__name-text {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--brown-tape);
+    text-shadow: 0 1px 0 color-mix(in srgb, var(--vintage-sky) 60%, transparent);
+  }
+
+  /* register 2: bigger band, isologo */
+  .booklet-spine__logo {
+    position: relative;
+    flex: 1;
+    background: linear-gradient(180deg, var(--spine-logo-top) 0%, var(--view-master) 40%, var(--spine-logo-bottom) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 4px 8px -3px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .booklet-spine__logo::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(0deg, color-mix(in srgb, black 40%, transparent) 0%, transparent 100%);
+  }
+
+  /* Abstract concentric-circle isologo placeholder (Rule 1/3 precedent:
+     a shape built from brand tokens, not an invented illustration) --
+     swappable for a real band isologo asset if Esteban supplies one.
+     Named .booklet-isologo (not .isologo) to avoid colliding with the
+     sitewide Isologo.astro component's own .isologo class -- Astro's
+     per-component style scoping keeps the two from actually leaking
+     into each other, but sharing a name was still a needless collision
+     risk (e.g. for a plain `document.querySelector('.isologo')`). */
+  .booklet-isologo {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background:
+      radial-gradient(
+        circle at 35% 30%,
+        color-mix(in srgb, var(--vintage-sky) 90%, transparent),
+        color-mix(in srgb, var(--vintage-sky) 15%, transparent) 60%,
+        transparent 62%
+      ),
+      repeating-radial-gradient(
+        circle,
+        color-mix(in srgb, var(--vintage-sky) 85%, transparent) 0 2px,
+        transparent 2px 8px
+      );
+    box-shadow:
+      0 3px 8px color-mix(in srgb, black 40%, transparent),
+      inset 0 0 0 3px color-mix(in srgb, var(--vintage-sky) 90%, transparent);
+  }
+
+  .booklet-isologo::after {
+    content: "";
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--view-master);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--vintage-sky) 90%, transparent);
+  }
+
+  @media (max-width: 26.25rem) {
+    .booklet-strip {
+      padding: var(--space-4) var(--space-3) 0;
+    }
+  }
 </style>
+
+<script>
+  // Mission 12: dynamic accordion-fold spacing, ported from
+  // reference/el-librito-look-reference.html's script. A hardcoded
+  // --panel-h tuned for one viewport width lands in the wrong place at
+  // another width and can strand the last paragraph's final line past
+  // the last fold. Instead: measure the strip's real rendered height and
+  // the last real paragraph's position, then pick the largest panel
+  // count (smallest panels) whose second-to-last fold still lands before
+  // that paragraph begins -- guaranteeing it always stays whole inside
+  // one panel, at any width. Re-run on resize.
+  function fitBookletFolds() {
+    const strip = document.querySelector<HTMLElement>(".booklet-strip");
+    const sections = document.querySelectorAll<HTMLElement>(".booklet-strip .booklet-section");
+    if (!strip || !sections.length) return;
+
+    const lastSection = sections[sections.length - 1];
+    const lastP = lastSection.querySelector("p") ?? lastSection;
+
+    const stripRect = strip.getBoundingClientRect();
+    const total = strip.scrollHeight;
+    const lastTop = lastP.getBoundingClientRect().top - stripRect.top;
+
+    let chosen: number | null = null;
+    for (let n = 5; n >= 2; n--) {
+      const panelH = total / n;
+      const lastFold = (n - 1) * panelH;
+      if (lastFold <= lastTop - 4) {
+        chosen = panelH;
+        break;
+      }
+    }
+    if (!chosen) chosen = total / 2; // fallback: two big panels, always safe
+
+    document.documentElement.style.setProperty("--panel-h", `${chosen}px`);
+  }
+
+  function initBookletFolds() {
+    fitBookletFolds();
+    // Remove before re-adding so repeated `astro:page-load` firings
+    // (Mission 04: this event also fires on the initial load, not just
+    // soft navigations) never accumulate more than one resize listener.
+    window.removeEventListener("resize", fitBookletFolds);
+    window.addEventListener("resize", fitBookletFolds);
+  }
+
+  document.addEventListener("astro:page-load", initBookletFolds);
+</script>
