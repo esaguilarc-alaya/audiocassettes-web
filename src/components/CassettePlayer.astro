@@ -1,0 +1,1103 @@
+---
+/**
+ * CassettePlayer — Mission 14
+ * (missions/MISSION_14_lado-a-lado-b-player.md).
+ *
+ * Ports reference/lado-a-lado-b-player-flow-reference.html's approved
+ * shelf -> cassette -> player flow faithfully:
+ *   - Screen 1 (shelf): a grid of closed cassette boxes.
+ *   - Screen 2 (cassette): tapping a box opens it — hero graphic, a
+ *     lado a / lado b toggle, and that side's tracklist.
+ *   - Screen 3 (player): tapping a track opens a full player — video
+ *     placeholder, transport controls, scrubber, a real fullscreen
+ *     toggle, and an expandable (non-synced) lyrics drawer.
+ *
+ * Everything for screens 2/3 is pre-rendered server-side (one hero +
+ * two tracklists per cassette, all but the first hidden) and the
+ * client script only toggles `hidden`/`.is-active`, matching the
+ * established pattern in ViewMasterShelf.astro (frameStacks/dotsGroups
+ * toggled via [hidden] + data-* indices) rather than shipping a
+ * parallel JS data blob — the player screen's fields are filled in
+ * from the clicked track row's own rendered text, not a second copy
+ * of the data.
+ *
+ * Screen-transition mechanics (three `.cst-screen`s, only `.is-active`
+ * ever toggled, no direction logic) are ported exactly as authored in
+ * the reference, including its one quirk: the reference defines a
+ * `.screen.behind` CSS rule that its own JS never applies — going
+ * "back" slides in from the right, the same direction as going
+ * forward, not from the left. That is genuinely what Esteban approved
+ * (verified by reading the reference's actual JS, not just its CSS),
+ * so it is ported as-is rather than "corrected" into a more
+ * conventional back-slides-from-left pattern on my own judgment.
+ *
+ * PLACEHOLDER DATA (Rule 3): the four cassettes/tracks below are
+ * Esteban's own approved sample data from the reference file, carried
+ * over unchanged — not invented here. Real cassette/track data is a
+ * later mission once recordings exist.
+ * TODO: replace with real cassette/track data once Esteban provides it.
+ *
+ * Deliberately NOT in this mission (see mission's Scope (out)):
+ * no real <audio>/<video> elements, no Media Session API, no
+ * cassette-box visual-authenticity redesign, no time-synced lyrics.
+ */
+interface Track {
+  title: string;
+  loc: string;
+  dur: string;
+}
+
+interface Cassette {
+  id: string;
+  title: string;
+  loc: string;
+  a: Track[];
+  b: Track[];
+}
+
+interface Props {
+  cassettes: Cassette[];
+}
+
+const { cassettes } = Astro.props;
+
+// Same fixed, deterministic cycling order as ViewMasterShelf.astro's
+// own DISK_COLORS (Mission 08) — reused here rather than inventing a
+// second palette-cycling scheme.
+const DISK_COLORS = [
+  "--view-master",
+  "--retro-pop",
+  "--polaroid-sunset",
+  "--brown-tape",
+  "--stereo-blue",
+] as const;
+
+// Player starts in a "playing" state (matching the reference), so the
+// play/pause icon is server-rendered as the pause glyph; the client
+// script swaps it on click.
+const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+---
+
+<div class="cst">
+  <div class="cst-app" id="cstApp">
+    <!-- SCREEN 1: shelf of closed cassettes -->
+    <div class="cst-screen is-active" id="cstScreenShelf">
+      <div class="cst-topbar"><span></span><span>lado a / lado b</span><span></span></div>
+      <h2 class="cst-shelf-title">nuestras cintas</h2>
+      <p class="cst-shelf-sub">tocá un cassette para ver las canciones</p>
+      <div class="cst-grid">
+        {
+          cassettes.map((c, i) => (
+            <button
+              type="button"
+              class="cst-box"
+              data-cassette-index={i}
+              style={`--box-color: var(${DISK_COLORS[i % DISK_COLORS.length]})`}
+              aria-label={`abrir ${c.title}`}
+            >
+              <span class="cst-reels">
+                <span class="cst-reel" />
+                <span class="cst-reel" />
+              </span>
+              <span class="cst-label">
+                <span class="cst-label-title">{c.title}</span>
+                <span class="cst-label-sides">lado a / lado b</span>
+              </span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- SCREEN 2: open cassette, lado a / lado b -->
+    <div class="cst-screen" id="cstScreenCassette">
+      <div class="cst-topbar">
+        <button type="button" class="cst-back" id="cstBackToShelf" aria-label="volver">‹</button>
+        <span id="cstCassetteEyebrow"></span>
+        <span></span>
+      </div>
+      {
+        cassettes.map((c, i) => (
+          <div class="cst-cassette-panel" data-cassette-index={i} hidden={i !== 0}>
+            <div class="cst-hero" style={`--box-color: var(${DISK_COLORS[i % DISK_COLORS.length]})`}>
+              <span class="cst-reels cst-reels--lg">
+                <span class="cst-reel cst-reel--lg" />
+                <span class="cst-reel cst-reel--lg" />
+              </span>
+              <div class="cst-hero-label">
+                <h2>{c.title}</h2>
+                <div class="cst-hero-loc">{c.loc}</div>
+              </div>
+            </div>
+            <div class="cst-side-toggle">
+              <button type="button" class="cst-side-btn is-active" data-side="a">
+                lado a
+              </button>
+              <button type="button" class="cst-side-btn" data-side="b">
+                lado b
+              </button>
+            </div>
+            <div class="cst-tracklist" data-side="a">
+              {c.a.map((t, ti) => (
+                <button
+                  type="button"
+                  class="cst-track-row"
+                  data-title={t.title}
+                  data-loc={t.loc}
+                  data-dur={t.dur}
+                >
+                  <span class="cst-track-num">{ti + 1}</span>
+                  <span class="cst-track-meta">
+                    <span class="cst-track-title">{t.title}</span>
+                    <span class="cst-track-loc">{t.loc}</span>
+                  </span>
+                  <span class="cst-track-dur">{t.dur}</span>
+                  <span class="cst-track-play" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div class="cst-tracklist" data-side="b" hidden>
+              {c.b.map((t, ti) => (
+                <button
+                  type="button"
+                  class="cst-track-row"
+                  data-title={t.title}
+                  data-loc={t.loc}
+                  data-dur={t.dur}
+                >
+                  <span class="cst-track-num">{ti + 1}</span>
+                  <span class="cst-track-meta">
+                    <span class="cst-track-title">{t.title}</span>
+                    <span class="cst-track-loc">{t.loc}</span>
+                  </span>
+                  <span class="cst-track-dur">{t.dur}</span>
+                  <span class="cst-track-play" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- SCREEN 3: player -->
+    <div class="cst-screen" id="cstScreenPlayer">
+      <div class="cst-topbar">
+        <button type="button" class="cst-back" id="cstBackToCassette" aria-label="volver">‹</button>
+        <span>reproduciendo desde las cintas</span>
+        <span></span>
+      </div>
+      <div class="cst-video-wrap" id="cstVideoWrap">
+        <div class="cst-scanline"></div>
+        <div class="cst-placeholder-scene">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M3 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <path d="m21 8-5 3 5 3z" />
+          </svg>
+          <span id="cstVideoPlaceholderLabel">video (placeholder)</span>
+        </div>
+        <div class="cst-rec-badge"><span class="cst-rec-dot"></span> en vivo · locación</div>
+        <button class="cst-fullscreen-btn" id="cstFsBtn" aria-label="pantalla completa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+          </svg>
+        </button>
+        <div class="cst-tap-overlay" id="cstTapOverlay">
+          <div class="cst-big-play">
+            <svg viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="cst-track-info">
+        <div class="cst-eyebrow">audiocassettes</div>
+        <h2 id="cstPlayerTitle">—</h2>
+        <div class="cst-player-loc" id="cstPlayerLoc">—</div>
+      </div>
+      <div class="cst-scrub-wrap">
+        <div class="cst-scrub-bar">
+          <div class="cst-scrub-fill"></div>
+        </div>
+        <div class="cst-time-row">
+          <span>1:12</span>
+          <span id="cstPlayerDur">3:41</span>
+        </div>
+      </div>
+      <div class="cst-controls">
+        <button type="button" class="cst-secondary" aria-label="anterior">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 6h2v12H6zM20 6v12l-8.5-6z" />
+          </svg>
+        </button>
+        <button type="button" class="cst-play-pause" id="cstPlayBtn" aria-label="pausa">
+          <svg viewBox="0 0 24 24" fill="currentColor" id="cstPlayIcon" set:html={PAUSE_ICON} />
+        </button>
+        <button type="button" class="cst-secondary" aria-label="siguiente">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 6h2v12h-2zM4 6v12l8.5-6z" />
+          </svg>
+        </button>
+      </div>
+      <button type="button" class="cst-lyrics-toggle" id="cstLyricsToggle">
+        <span>letras</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      <div class="cst-lyrics-drawer" id="cstLyricsDrawer">
+        <div class="cst-drawer-handle"></div>
+        <div class="cst-drawer-head">
+          <h3 id="cstLyricsDrawerTitle">letras</h3>
+          <button type="button" id="cstCloseDrawer" aria-label="cerrar">✕</button>
+        </div>
+        <div class="cst-lyrics-body">
+          <p class="cst-lyric-line">bajo el cielo abierto, cerca de la cima</p>
+          <p class="cst-lyric-line is-active">grabamos lo que siente esta guitarra</p>
+          <p class="cst-lyric-line">el viento se lleva la letra a otro lado</p>
+          <p class="cst-lyric-line">y el cassette guarda lo que nunca dijimos</p>
+          <p class="cst-lyric-line">&nbsp;</p>
+          <p class="cst-lyric-line">rebobiná si querés, volvé al principio</p>
+          <p class="cst-lyric-line">esta cinta no se acaba, solo cambia de lado</p>
+        </div>
+        <p class="cst-lyrics-note">
+          Letra de ejemplo — panel simple, sin sincronización por ahora.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Every color below traces to an established token or the black/white
+     neutral precedents already used elsewhere in this codebase
+     (global.css's own placeholder-block already mixes `white`; Missions
+     08/10/12 already established `black` via color-mix()) — the
+     reference's own extra `--ink` token and raw hex values (used for
+     the video-wrap/lyrics-drawer's dark gradients) are replaced with
+     color-mix() derivations from --brown-tape + black, see
+     MISSION_14_response.md for the exact correspondence. */
+  .cst {
+    margin-top: var(--space-5);
+  }
+
+  .cst-app {
+    position: relative;
+    width: 100%;
+    max-width: 26rem;
+    margin: 0 auto;
+    height: min(44rem, 82vh);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--brown-tape) 55%, black) 0%,
+      color-mix(in srgb, var(--brown-tape) 25%, black) 55%
+    );
+    color: var(--vintage-sky);
+    font-family: var(--font-body);
+    box-shadow: 0 16px 40px color-mix(in srgb, black 45%, transparent);
+  }
+
+  .cst-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
+    overflow-y: auto;
+  }
+
+  .cst-screen.is-active {
+    transform: translateX(0);
+  }
+
+  /* Ported from the reference as-authored: this rule exists in the
+     reference's own CSS but its JS never applies it (verified by
+     reading the script, not assumed) -- back navigation slides in
+     from the right too, same as forward. Kept inert here for the same
+     reason: faithful port, not a corrected guess. */
+  .cst-screen.is-behind {
+    transform: translateX(-100%);
+  }
+
+  .cst-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.1rem 0.4rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    color: color-mix(in srgb, var(--stereo-blue) 55%, var(--vintage-sky));
+    flex-shrink: 0;
+  }
+
+  .cst-back {
+    background: none;
+    border: none;
+    color: var(--vintage-sky);
+    font-size: 1.3rem;
+    cursor: pointer;
+    opacity: 0.85;
+    padding: 0.25rem;
+  }
+
+  /* ===== SCREEN 1: shelf ===== */
+  .cst-shelf-title {
+    padding: 0 1.3rem;
+    margin: 0.3rem 0 0.2rem;
+    font-size: 1.1rem;
+  }
+
+  .cst-shelf-sub {
+    padding: 0 1.3rem;
+    margin: 0 0 1rem;
+    font-size: 0.75rem;
+    opacity: 0.6;
+  }
+
+  .cst-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 0 1.3rem 1.5rem;
+  }
+
+  .cst-box {
+    position: relative;
+    /* min-width: 0 overrides a real CSS-spec gotcha found during this
+       mission's own narrow-viewport verification (not present in the
+       reference's fixed 420px demo frame): a grid item with
+       aspect-ratio set gets its automatic minimum width transferred
+       from its flex-column content's minimum height, which was
+       inflating each track past half the grid's real width and
+       causing horizontal overflow at 320/375px. This lets the item
+       shrink to its actual grid track instead. */
+    min-width: 0;
+    aspect-ratio: 3 / 2;
+    border-radius: 0.5rem;
+    padding: 0.55rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow:
+      0 6px 14px color-mix(in srgb, black 40%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, black 25%, transparent);
+    transition: transform 0.15s;
+    background: var(--box-color);
+    border: none;
+    font-family: inherit;
+  }
+
+  .cst-box:active {
+    transform: scale(0.96);
+  }
+
+  .cst-reels {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    background: color-mix(in srgb, black 28%, transparent);
+    border-radius: 0.3rem;
+    padding: 0.4rem 0;
+  }
+
+  .cst-reel {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+      color-mix(in srgb, var(--vintage-sky) 65%, transparent) 0 10deg,
+      transparent 10deg 20deg
+    );
+    box-shadow: inset 0 0 0 3px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .cst-label {
+    background: var(--vintage-sky);
+    color: var(--brown-tape);
+    border-radius: 0.25rem;
+    padding: 0.3rem 0.4rem;
+    display: block;
+    text-align: left;
+  }
+
+  .cst-label-title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+
+  .cst-label-sides {
+    display: block;
+    font-size: 0.58rem;
+    opacity: 0.65;
+    margin-top: 0.1rem;
+  }
+
+  /* ===== SCREEN 2: open cassette ===== */
+  .cst-hero {
+    margin: 0.3rem 1.3rem 0;
+    border-radius: 0.7rem;
+    padding: 0.9rem;
+    box-shadow: 0 8px 20px color-mix(in srgb, black 40%, transparent);
+    flex-shrink: 0;
+    background: var(--box-color);
+  }
+
+  .cst-reels--lg {
+    background: color-mix(in srgb, black 28%, transparent);
+    border-radius: 0.4rem;
+    padding: 0.9rem 0;
+  }
+
+  .cst-reel--lg {
+    width: 40px;
+    height: 40px;
+    box-shadow: inset 0 0 0 5px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .cst-hero-label {
+    text-align: center;
+    margin-top: 0.7rem;
+  }
+
+  .cst-hero-label h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--brown-tape);
+  }
+
+  .cst-hero-loc {
+    font-size: 0.68rem;
+    color: var(--brown-tape);
+    opacity: 0.65;
+    margin-top: 0.1rem;
+  }
+
+  .cst-side-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 1.3rem 0.2rem;
+    flex-shrink: 0;
+  }
+
+  .cst-side-btn {
+    flex: 1;
+    background: color-mix(in srgb, var(--vintage-sky) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vintage-sky) 18%, transparent);
+    color: var(--vintage-sky);
+    border-radius: 999px;
+    padding: 0.55rem 0;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .cst-side-btn.is-active {
+    background: var(--polaroid-sunset);
+    color: var(--brown-tape);
+    border-color: var(--polaroid-sunset);
+  }
+
+  .cst-tracklist {
+    padding: 0.8rem 1.3rem 2rem;
+  }
+
+  .cst-track-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.7rem 0.2rem;
+    border: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--vintage-sky) 10%, transparent);
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .cst-track-row:active {
+    background: color-mix(in srgb, var(--vintage-sky) 6%, transparent);
+  }
+
+  .cst-track-num {
+    width: 1.4rem;
+    font-size: 0.78rem;
+    opacity: 0.5;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cst-track-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cst-track-title {
+    font-size: 0.92rem;
+  }
+
+  .cst-track-loc {
+    font-size: 0.68rem;
+    opacity: 0.55;
+    margin-top: 0.1rem;
+  }
+
+  .cst-track-dur {
+    font-size: 0.75rem;
+    opacity: 0.55;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cst-track-play {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--vintage-sky) 10%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .cst-track-play svg {
+    width: 11px;
+    height: 11px;
+    fill: var(--vintage-sky);
+    margin-left: 1px;
+  }
+
+  /* ===== SCREEN 3: player ===== */
+  .cst-video-wrap {
+    position: relative;
+    margin: 0.25rem 1.1rem 0;
+    border-radius: 0.9rem;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    background: radial-gradient(
+      circle at 30% 20%,
+      color-mix(in srgb, var(--brown-tape) 65%, black 35%),
+      color-mix(in srgb, var(--brown-tape) 15%, black 85%) 75%
+    );
+    box-shadow:
+      inset 0 0 0 2px color-mix(in srgb, var(--vintage-sky) 15%, transparent),
+      0 10px 24px color-mix(in srgb, black 50%, transparent);
+    flex-shrink: 0;
+  }
+
+  .cst-scanline {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, black 15%, transparent) 0 1px,
+      transparent 1px 3px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .cst-placeholder-scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.4rem;
+    color: color-mix(in srgb, var(--vintage-sky) 55%, transparent);
+  }
+
+  .cst-placeholder-scene svg {
+    width: 46px;
+    height: 46px;
+    opacity: 0.6;
+  }
+
+  .cst-placeholder-scene span {
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+  }
+
+  .cst-rec-badge {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--view-master);
+    background: color-mix(in srgb, black 35%, transparent);
+    padding: 0.2rem 0.5rem 0.2rem 0.35rem;
+    border-radius: 999px;
+  }
+
+  .cst-rec-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--view-master);
+    animation: cst-pulse 1.4s infinite;
+  }
+
+  @keyframes cst-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  .cst-fullscreen-btn {
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.6rem;
+    width: 34px;
+    height: 34px;
+    background: color-mix(in srgb, black 45%, transparent);
+    border: none;
+    border-radius: 50%;
+    color: var(--vintage-sky);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .cst-fullscreen-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .cst-tap-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, black 25%, transparent);
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .cst-big-play {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--view-master);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .cst-big-play svg {
+    width: 22px;
+    height: 22px;
+    margin-left: 3px;
+    fill: var(--vintage-sky);
+  }
+
+  .cst-tap-overlay.is-hidden {
+    display: none;
+  }
+
+  .cst-track-info {
+    padding: 1rem 1.3rem 0.2rem;
+    flex-shrink: 0;
+  }
+
+  .cst-eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--retro-pop);
+    margin-bottom: 0.2rem;
+  }
+
+  .cst-track-info h2 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  .cst-player-loc {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    margin-top: 0.15rem;
+  }
+
+  .cst-scrub-wrap {
+    padding: 0.9rem 1.3rem 0;
+    flex-shrink: 0;
+  }
+
+  .cst-scrub-bar {
+    position: relative;
+    height: 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--vintage-sky) 18%, transparent);
+    cursor: pointer;
+  }
+
+  .cst-scrub-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 32%;
+    border-radius: 999px;
+    background: var(--polaroid-sunset);
+  }
+
+  .cst-scrub-fill::after {
+    content: "";
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--vintage-sky);
+    box-shadow: 0 2px 4px color-mix(in srgb, black 40%, transparent);
+  }
+
+  .cst-time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    opacity: 0.55;
+    margin-top: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cst-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4rem;
+    padding: 1rem 1rem 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .cst-controls button {
+    background: none;
+    border: none;
+    color: var(--vintage-sky);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+  }
+
+  .cst-controls svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .cst-play-pause {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--vintage-sky);
+    color: var(--brown-tape);
+  }
+
+  .cst-play-pause svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--brown-tape);
+  }
+
+  .cst-secondary svg {
+    width: 18px;
+    height: 18px;
+    opacity: 0.85;
+    color: color-mix(in srgb, var(--stereo-blue) 70%, var(--vintage-sky));
+  }
+
+  .cst-lyrics-toggle {
+    margin: 0.6rem 1.3rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: color-mix(in srgb, var(--vintage-sky) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vintage-sky) 18%, transparent);
+    border-radius: 999px;
+    padding: 0.5rem 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    color: var(--vintage-sky);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+
+  .cst-lyrics-toggle svg {
+    width: 13px;
+    height: 13px;
+    transition: transform 0.25s;
+  }
+
+  .cst-lyrics-toggle.is-open svg {
+    transform: rotate(180deg);
+  }
+
+  .cst-lyrics-drawer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--brown-tape) 30%, black 70%) 0%,
+      color-mix(in srgb, var(--brown-tape) 14%, black 86%) 100%
+    );
+    border-top-left-radius: 1.4rem;
+    border-top-right-radius: 1.4rem;
+    box-shadow: 0 -12px 30px color-mix(in srgb, black 55%, transparent);
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
+    height: 78%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cst-lyrics-drawer.is-open {
+    transform: translateY(0%);
+  }
+
+  .cst-drawer-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--vintage-sky) 30%, transparent);
+    margin: 0.7rem auto 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .cst-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 1.3rem 0.6rem;
+    flex-shrink: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--vintage-sky) 8%, transparent);
+  }
+
+  .cst-drawer-head h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: lowercase;
+    color: var(--retro-pop);
+  }
+
+  .cst-drawer-head button {
+    background: none;
+    border: none;
+    color: var(--vintage-sky);
+    opacity: 0.6;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  .cst-lyrics-body {
+    padding: 1.2rem 1.5rem 2rem;
+    overflow-y: auto;
+    font-size: 1.05rem;
+    line-height: 2.1;
+  }
+
+  .cst-lyric-line {
+    margin: 0;
+    opacity: 0.42;
+    transition:
+      opacity 0.2s,
+      color 0.2s;
+  }
+
+  .cst-lyric-line.is-active {
+    opacity: 1;
+    color: var(--polaroid-sunset);
+    font-weight: 600;
+  }
+
+  .cst-lyrics-note {
+    margin: 0 1.5rem 1rem;
+    font-size: 0.68rem;
+    opacity: 0.45;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 26.25rem) {
+    .cst-app {
+      max-width: 100%;
+      height: min(42rem, 88vh);
+      border-radius: var(--radius-sm);
+    }
+  }
+</style>
+
+<script>
+  // Mission 14: shelf -> cassette -> player flow. Ported from the
+  // reference's own JS structure: showScreen() only ever toggles
+  // `.is-active` (see the .is-behind CSS-rule comment above for why).
+  function initCassettePlayer() {
+    const root = document.querySelector<HTMLElement>(".cst");
+    if (!root) return;
+
+    const screenShelf = root.querySelector<HTMLElement>("#cstScreenShelf");
+    const screenCassette = root.querySelector<HTMLElement>("#cstScreenCassette");
+    const screenPlayer = root.querySelector<HTMLElement>("#cstScreenPlayer");
+    if (!screenShelf || !screenCassette || !screenPlayer) return;
+
+    function showScreen(el: HTMLElement) {
+      [screenShelf, screenCassette, screenPlayer].forEach((s) =>
+        s?.classList.remove("is-active"),
+      );
+      el.classList.add("is-active");
+    }
+
+    const cassettePanels = Array.from(
+      root.querySelectorAll<HTMLElement>(".cst-cassette-panel"),
+    );
+    const cassetteEyebrow = root.querySelector<HTMLElement>("#cstCassetteEyebrow");
+
+    function openCassette(index: number) {
+      cassettePanels.forEach((panel) => {
+        panel.toggleAttribute("hidden", panel.dataset.cassetteIndex !== String(index));
+      });
+      const activePanel = cassettePanels.find(
+        (panel) => panel.dataset.cassetteIndex === String(index),
+      );
+      const title = activePanel?.querySelector("h2")?.textContent ?? "";
+      if (cassetteEyebrow) cassetteEyebrow.textContent = title;
+      showScreen(screenCassette);
+    }
+
+    root.querySelectorAll<HTMLButtonElement>(".cst-box").forEach((box) => {
+      box.addEventListener("click", () => {
+        const index = parseInt(box.dataset.cassetteIndex ?? "0", 10);
+        openCassette(index);
+      });
+    });
+
+    // Lado a / lado b toggle -- scoped per-panel so each cassette keeps
+    // its own independent side state.
+    cassettePanels.forEach((panel) => {
+      const sideBtns = Array.from(panel.querySelectorAll<HTMLButtonElement>(".cst-side-btn"));
+      const tracklists = Array.from(panel.querySelectorAll<HTMLElement>(".cst-tracklist"));
+      sideBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const side = btn.dataset.side;
+          sideBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.side === side));
+          tracklists.forEach((list) =>
+            list.toggleAttribute("hidden", list.dataset.side !== side),
+          );
+        });
+      });
+    });
+
+    root.querySelector("#cstBackToShelf")?.addEventListener("click", () => showScreen(screenShelf));
+    root
+      .querySelector("#cstBackToCassette")
+      ?.addEventListener("click", () => showScreen(screenCassette));
+
+    // Player screen fields are filled straight from the clicked track
+    // row's own rendered text/data-* -- no separate JS data copy.
+    const playerTitle = root.querySelector<HTMLElement>("#cstPlayerTitle");
+    const playerLoc = root.querySelector<HTMLElement>("#cstPlayerLoc");
+    const playerDur = root.querySelector<HTMLElement>("#cstPlayerDur");
+    const videoPlaceholderLabel = root.querySelector<HTMLElement>("#cstVideoPlaceholderLabel");
+    const lyricsDrawerTitle = root.querySelector<HTMLElement>("#cstLyricsDrawerTitle");
+
+    root.querySelectorAll<HTMLButtonElement>(".cst-track-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const title = row.dataset.title ?? "";
+        const loc = row.dataset.loc ?? "";
+        const dur = row.dataset.dur ?? "";
+        if (playerTitle) playerTitle.textContent = title;
+        if (playerLoc) playerLoc.textContent = `grabado en ${loc} · las cintas`;
+        if (playerDur) playerDur.textContent = dur;
+        if (videoPlaceholderLabel) videoPlaceholderLabel.textContent = `video: ${loc} (placeholder)`;
+        if (lyricsDrawerTitle) lyricsDrawerTitle.textContent = `letras — ${title}`;
+        showScreen(screenPlayer);
+      });
+    });
+
+    // Player controls -- visual/interactive state only, no real
+    // playback (Scope (out): no real audio/video this mission).
+    const playBtn = root.querySelector<HTMLButtonElement>("#cstPlayBtn");
+    const playIcon = root.querySelector<SVGElement>("#cstPlayIcon");
+    const tapOverlay = root.querySelector<HTMLElement>("#cstTapOverlay");
+    const PLAY_PATH = '<path d="M8 5v14l11-7z"></path>';
+    const PAUSE_PATH = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"></path>';
+
+    let playing = true;
+    function setPlaying(p: boolean) {
+      playing = p;
+      if (playIcon) playIcon.innerHTML = playing ? PAUSE_PATH : PLAY_PATH;
+      tapOverlay?.classList.toggle("is-hidden", playing);
+    }
+    playBtn?.addEventListener("click", () => setPlaying(!playing));
+    tapOverlay?.addEventListener("click", () => setPlaying(true));
+
+    // Lyrics drawer -- simple expand/collapse, no time-sync.
+    const lyricsToggle = root.querySelector<HTMLButtonElement>("#cstLyricsToggle");
+    const lyricsDrawer = root.querySelector<HTMLElement>("#cstLyricsDrawer");
+    const closeDrawer = root.querySelector<HTMLButtonElement>("#cstCloseDrawer");
+    lyricsToggle?.addEventListener("click", () => {
+      lyricsDrawer?.classList.add("is-open");
+      lyricsToggle.classList.add("is-open");
+    });
+    closeDrawer?.addEventListener("click", () => {
+      lyricsDrawer?.classList.remove("is-open");
+      lyricsToggle?.classList.remove("is-open");
+    });
+
+    // Real Fullscreen API on the app container -- not simulated.
+    const app = root.querySelector<HTMLElement>("#cstApp");
+    const fsBtn = root.querySelector<HTMLButtonElement>("#cstFsBtn");
+    fsBtn?.addEventListener("click", () => {
+      if (!document.fullscreenElement) app?.requestFullscreen?.().catch(() => {});
+      else document.exitFullscreen?.();
+    });
+
+    // Reset to a known state (playing, shelf screen, side A, lyrics
+    // closed) so re-running init on a soft navigation back to this
+    // page doesn't leave stale state from a previous visit.
+    setPlaying(true);
+  }
+
+  // `astro:page-load` fires on initial load too once <ClientRouter />
+  // is present (Mission 04) -- relying on it alone, no immediate call,
+  // avoids double-binding every listener above.
+  document.addEventListener("astro:page-load", initCassettePlayer);
+</script>

@@ -1,13 +1,64 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageAccentBar from "../components/PageAccentBar.astro";
+import CassettePlayer from "../components/CassettePlayer.astro";
+
+/**
+ * Mission 14 (missions/MISSION_14_lado-a-lado-b-player.md): four sample
+ * cassettes, carried over unchanged from
+ * reference/lado-a-lado-b-player-flow-reference.html's own approved
+ * demo data (Esteban already reviewed this exact set) — not invented
+ * here. Real cassette/track data (recordings, real durations, real
+ * lyrics) is a later mission once Esteban provides it.
+ * TODO: replace with real cassette/track data once it exists.
+ */
+const cassettes = [
+  {
+    id: "cerro",
+    title: "grabaciones — cerro chirripó",
+    loc: "las cintas · locación 1",
+    a: [
+      { title: "Rewind (en el cerro)", loc: "cerro chirripó", dur: "3:41" },
+      { title: "Altura", loc: "cerro chirripó", dur: "2:58" },
+    ],
+    b: [{ title: "Niebla", loc: "cerro chirripó", dur: "4:05" }],
+  },
+  {
+    id: "playa",
+    title: "grabaciones — guanacaste",
+    loc: "las cintas · locación 2",
+    a: [{ title: "Marea", loc: "guanacaste", dur: "3:12" }],
+    b: [
+      { title: "Sal y sol", loc: "guanacaste", dur: "3:33" },
+      { title: "Vuelta a casa", loc: "guanacaste", dur: "2:47" },
+    ],
+  },
+  {
+    id: "ciudad",
+    title: "grabaciones — san josé",
+    loc: "las cintas · locación 3",
+    a: [{ title: "Casa de amigos", loc: "san josé", dur: "3:02" }],
+    b: [{ title: "Luces de neón", loc: "san josé", dur: "3:50" }],
+  },
+  {
+    id: "bosque",
+    title: "grabaciones — monteverde",
+    loc: "las cintas · locación 4",
+    a: [{ title: "Verde", loc: "monteverde", dur: "3:20" }],
+    b: [{ title: "Camino angosto", loc: "monteverde", dur: "2:55" }],
+  },
+];
 ---
 
 <BaseLayout title="lado a / lado b">
   <section class="stub" style="--page-accent: var(--view-master);">
     <h1>lado a / lado b</h1>
     <PageAccentBar />
-    <p>[ contenido real de esta sección — Misión TBD ]</p>
+    <p>
+      Cuatro grabaciones de muestra — tocá un cassette para ver las
+      canciones de cada lado.
+    </p>
+    <CassettePlayer cassettes={cassettes} />
   </section>
 </BaseLayout>
 
@@ -16,5 +67,11 @@ import PageAccentBar from "../components/PageAccentBar.astro";
     max-width: 72rem;
     margin: 0 auto;
     padding: var(--space-6) var(--space-4);
+  }
+
+  .stub > p {
+    max-width: 34rem;
+    margin: var(--space-3) 0 0;
+    opacity: 0.85;
   }
 </style>
