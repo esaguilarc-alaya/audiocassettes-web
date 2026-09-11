@@ -652,13 +652,45 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     padding: 0 1.3rem;
     margin: 0.3rem 0 0.2rem;
     font-size: 1.1rem;
+    /* Mission 21: a real bug found while verifying this mission's own
+       spacing fix -- #cstScreenShelf (like every .cst-screen) is a
+       column flexbox, and none of its children had flex-shrink: 0.
+       Adding more required vertical space below (bigger margins/
+       padding) didn't make the screen scroll the way .cst-screen's
+       own overflow-y: auto is meant to allow -- it silently SHRANK
+       .cst-carousel-stage instead (the item with the most shrinkable
+       declared height), which moved the carousel/lid in a way that
+       ate into the very gap this mission is adding. Fixed by pinning
+       every child's height here so overflow, not shrinkage, is what
+       handles a tight viewport -- confirmed via getBoundingClientRect
+       that .cst-carousel-stage now always renders at its full
+       declared height, not a soft "carousel dimensions changed"
+       redesign the mission's own Scope (out) warns against. */
+    flex-shrink: 0;
   }
 
   .cst-shelf-sub {
     padding: 0 1.3rem;
-    margin: 0 0 1rem;
+    /* Mission 21: was `0 0 1rem` -- measured (not eyeballed) as only a
+       16px gap before .cst-carousel-stage begins, with the carousel's
+       own lid (which extends further up via its negative `top`
+       offset) landing just ~53px below this text regardless of
+       viewport height. Esteban flagged this as reading flush/touching
+       on a real device; widened for clearer breathing room. */
+    margin: 0 0 2rem;
     font-size: 0.75rem;
     opacity: 0.6;
+    flex-shrink: 0; /* see .cst-shelf-title's comment */
+  }
+
+  /* Mission 21: extra room below the carousel's own controls, before
+     the shelf screen's own scrollable area ends -- scoped to Screen 1
+     only (not the generic .cst-screen, which Screens 2/3 also use and
+     are out of this mission's scope). Esteban's screenshot showed the
+     turn-buttons/face-dots row sitting close to the card's visible
+     bottom edge; measured before/after in MISSION_21_response.md. */
+  #cstScreenShelf {
+    padding-bottom: 2rem;
   }
 
   /* ===== Mission 20: rotating 3D cassette carousel =====
@@ -678,6 +710,9 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     align-items: center;
     justify-content: center;
     perspective: 55rem;
+    flex-shrink: 0; /* see .cst-shelf-title's comment (Mission 21) --
+      this is the item that must NOT be the one absorbing a tight
+      viewport by silently shrinking. */
   }
 
   .cst-carousel {
@@ -852,7 +887,10 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     align-items: center;
     justify-content: center;
     gap: 1.1rem;
-    margin-top: 0.5rem;
+    /* Mission 21: was 0.5rem -- a bit more separation between the
+       carousel itself and the turn-buttons/face-dots row below it. */
+    margin-top: 1.25rem;
+    flex-shrink: 0; /* see .cst-shelf-title's comment */
   }
 
   .cst-turn-btn {
