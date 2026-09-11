@@ -96,6 +96,18 @@ const DISK_COLORS = [
   "--stereo-blue",
 ] as const;
 
+// Mission 20: display-only label overrides for the carousel spine
+// (face 0 only, real cassettes) -- these do NOT rename anything in the
+// `cassettes` data itself; `c.title` stays what it is and keeps
+// driving Screen 2's eyebrow/hero exactly as before. Indexed the same
+// way DISK_COLORS already is.
+const CAROUSEL_SPINE_LABELS = [
+  "Audiocassettes",
+  "Reel Real",
+  "En vivo - Montserrat, Coronado",
+  "En vivo - Calle Blancos",
+] as const;
+
 // Player starts in a "playing" state (matching the reference), so the
 // play/pause icon is server-rendered as the pause glyph; the client
 // script swaps it on click.
@@ -206,27 +218,105 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       <div class="cst-topbar"><span></span><span>lado a / lado b</span><span></span></div>
       <h2 class="cst-shelf-title">nuestras cintas</h2>
       <p class="cst-shelf-sub">tocá un cassette para ver las canciones</p>
-      <div class="cst-grid">
-        {
-          cassettes.map((c, i) => (
-            <button
-              type="button"
-              class="cst-box"
-              data-cassette-index={i}
-              style={`--box-color: var(${DISK_COLORS[i % DISK_COLORS.length]})`}
-              aria-label={`abrir ${c.title}`}
-            >
-              <span class="cst-reels">
-                <span class="cst-reel" />
-                <span class="cst-reel" />
-              </span>
-              <span class="cst-label">
-                <span class="cst-label-title">{c.title}</span>
-                <span class="cst-label-sides">lado a / lado b</span>
-              </span>
-            </button>
-          ))
-        }
+      <!--
+        Mission 20: rotating 3D cassette carousel, ported from
+        reference/nuestras-cintas-carousel-reference.html (Esteban's
+        approved final design after 10 reviewed iterations against a
+        real cassette-rack photo). 16 slots total: face 0 holds the 4
+        real cassettes (exact existing order, click-wiring unchanged);
+        faces 1-3 hold 12 inert "próximamente" placeholder slots,
+        markup-only -- not a fake entry in the `cassettes` data.
+
+        CRITICAL (per the mission's own explicit warning): `.cst-face`,
+        `.cst-slot`, and `.cst-spine` all carry `transform-style:
+        preserve-3d` in the CSS below. Dropping any one of these
+        silently flattens every spine's translateZ() pop-out onto its
+        face's own 2D plane -- the cassette boxes would render dead
+        flat with zero visible error, easy to miss without actually
+        looking for the pop-out (see MISSION_20_response.md for how
+        this was verified, not just assumed from the properties being
+        present).
+      -->
+      <div class="cst-carousel-stage" id="cstCarouselStage">
+        <div class="cst-carousel" id="cstCarousel">
+          <div class="cst-carousel-lid"></div>
+
+          <div class="cst-face cst-face-0">
+            <div class="cst-face-label">estante de cassettes</div>
+            {
+              cassettes.map((c, i) => (
+                <div class="cst-slot">
+                  <button
+                    type="button"
+                    class="cst-spine"
+                    data-cassette-index={i}
+                    aria-label={`abrir ${c.title}`}
+                  >
+                    <div
+                      class="cst-spine-face"
+                      style={`background: color-mix(in srgb, var(${DISK_COLORS[i % DISK_COLORS.length]}) 80%, black 10%);`}
+                    >
+                      <span class="cst-spine-title">
+                        {CAROUSEL_SPINE_LABELS[i % CAROUSEL_SPINE_LABELS.length]}
+                      </span>
+                    </div>
+                    <div
+                      class="cst-spine-side"
+                      style={`background: color-mix(in srgb, var(${DISK_COLORS[i % DISK_COLORS.length]}) 55%, black 45%);`}
+                    />
+                  </button>
+                </div>
+              ))
+            }
+          </div>
+
+          {
+            [1, 2, 3].map((faceIndex) => (
+              <div class={`cst-face cst-face-${faceIndex}`}>
+                <div class="cst-face-label">estante de cassettes</div>
+                {Array.from({ length: 4 }).map(() => (
+                  <div class="cst-slot cst-placeholder-slot">
+                    <button type="button" class="cst-spine">
+                      <div class="cst-spine-face">
+                        <span class="cst-spine-title">próximamente</span>
+                      </div>
+                      <div class="cst-spine-side" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="cst-carousel-controls">
+        <button
+          type="button"
+          class="cst-turn-btn"
+          id="cstCarouselTurnLeft"
+          aria-label="girar a la izquierda"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+        <div class="cst-face-dots" id="cstCarouselFaceDots">
+          <div class="cst-face-dot is-active" />
+          <div class="cst-face-dot" />
+          <div class="cst-face-dot" />
+          <div class="cst-face-dot" />
+        </div>
+        <button
+          type="button"
+          class="cst-turn-btn"
+          id="cstCarouselTurnRight"
+          aria-label="girar a la derecha"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -571,42 +661,278 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     opacity: 0.6;
   }
 
-  .cst-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding: 0 1.3rem 1.5rem;
+  /* ===== Mission 20: rotating 3D cassette carousel =====
+     Ported from reference/nuestras-cintas-carousel-reference.html.
+     Dimensions/angles/colors/transitions are the reference's own
+     settled values, unchanged -- only selector names gained the
+     `cst-` prefix this file already uses everywhere else (Standing
+     Rule/item 7). The carousel sits at a permanent base angle
+     (BASE_ANGLE in the script below) instead of resting flat-on --
+     that's what keeps a slice of the next face visible at all times,
+     matching the real cassette-rack photo Esteban approved this
+     against, rather than looking at one flat face that swaps content. */
+  .cst-carousel-stage {
+    position: relative;
+    height: 23rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 55rem;
   }
 
-  .cst-box {
+  .cst-carousel {
     position: relative;
-    /* min-width: 0 overrides a real CSS-spec gotcha found during this
-       mission's own narrow-viewport verification (not present in the
-       reference's fixed 420px demo frame): a grid item with
-       aspect-ratio set gets its automatic minimum width transferred
-       from its flex-column content's minimum height, which was
-       inflating each track past half the grid's real width and
-       causing horizontal overflow at 320/375px. This lets the item
-       shrink to its actual grid track instead. */
-    min-width: 0;
-    aspect-ratio: 3 / 2;
-    border-radius: 0.5rem;
-    padding: 0.55rem;
-    cursor: pointer;
+    width: 18.5rem;
+    height: 20rem;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.3, 0.7, 0.3, 1);
+    cursor: grab;
+  }
+
+  .cst-carousel.is-dragging {
+    cursor: grabbing;
+  }
+
+  /* CRITICAL, per this mission's own explicit warning: preserve-3d
+     must be set on .cst-face, .cst-slot, AND .cst-spine, not just the
+     outer .cst-carousel -- dropping any one of these three silently
+     flattens every spine's translateZ() pop-out onto its face's own
+     2D plane, with zero visible CSS error (the properties all still
+     "look" correct, the render just goes flat). Verified after
+     porting that the pop-out is actually visible, not just that these
+     three declarations are present -- see MISSION_20_response.md. */
+  .cst-face {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    box-shadow:
-      0 6px 14px color-mix(in srgb, black 40%, transparent),
-      inset 0 0 0 1px color-mix(in srgb, black 25%, transparent);
-    transition: transform 0.15s;
-    background: var(--box-color);
-    border: none;
-    font-family: inherit;
+    gap: 0.45rem;
+    padding: 1.5rem 0.75rem 0.8rem;
+    border-radius: 0.5rem;
+    backface-visibility: hidden;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--brown-tape) 84%, black 16%),
+      color-mix(in srgb, var(--brown-tape) 60%, black 40%)
+    );
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--vintage-sky) 10%, transparent);
+    transform-style: preserve-3d;
   }
 
-  .cst-box:active {
-    transform: scale(0.96);
+  .cst-face-0 {
+    transform: rotateY(0deg) translateZ(9.25rem);
+  }
+  .cst-face-1 {
+    transform: rotateY(90deg) translateZ(9.25rem);
+  }
+  .cst-face-2 {
+    transform: rotateY(180deg) translateZ(9.25rem);
+  }
+  .cst-face-3 {
+    transform: rotateY(270deg) translateZ(9.25rem);
+  }
+
+  .cst-face-label {
+    position: absolute;
+    top: 0.55rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    letter-spacing: 0.07em;
+    color: color-mix(in srgb, var(--vintage-sky) 65%, transparent);
+  }
+
+  .cst-carousel-lid {
+    position: absolute;
+    top: -1.5rem;
+    left: 50%;
+    width: 10.6rem;
+    height: 3rem;
+    transform: translateX(-50%) rotateX(90deg);
+    transform-origin: bottom center;
+    background: radial-gradient(
+      circle at 35% 30%,
+      color-mix(in srgb, var(--brown-tape) 55%, black 20%),
+      color-mix(in srgb, var(--brown-tape) 28%, black 58%)
+    );
+    border-radius: 50%;
+    box-shadow: 0 4px 10px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .cst-slot {
+    position: relative;
+    flex: 1;
+    background: color-mix(in srgb, black 42%, transparent);
+    border-radius: 0.3rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.15rem;
+    box-shadow: inset 0 2px 6px color-mix(in srgb, black 60%, transparent);
+    transform-style: preserve-3d;
+  }
+
+  /* The per-cassette "box coming off the shelf" look, carried over
+     from the flat-grid shelf (Mission 14) this carousel replaces. */
+  .cst-spine {
+    position: relative;
+    width: 100%;
+    height: 84%;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    text-align: left;
+    font-family: var(--font-body);
+    transform-style: preserve-3d;
+    transform: translateZ(0.55rem);
+    transition: transform 0.12s ease;
+  }
+
+  .cst-spine:hover,
+  .cst-spine:focus-visible {
+    transform: translateZ(0.75rem);
+  }
+
+  .cst-spine:active {
+    transform: translateZ(0.3rem);
+  }
+
+  .cst-spine-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.22rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.6rem;
+    box-shadow: 0 3px 7px color-mix(in srgb, black 40%, transparent);
+  }
+
+  .cst-spine-side {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0.5rem;
+    height: 100%;
+    transform-origin: right center;
+    transform: rotateY(90deg) translateZ(0.25rem);
+  }
+
+  .cst-spine-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.15;
+    color: var(--vintage-sky);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .cst-placeholder-slot .cst-spine-face {
+    background: color-mix(in srgb, var(--brown-tape) 60%, black 40%) !important;
+    box-shadow: none;
+  }
+  .cst-placeholder-slot .cst-spine {
+    cursor: default;
+  }
+  .cst-placeholder-slot .cst-spine-title {
+    color: color-mix(in srgb, var(--vintage-sky) 55%, transparent);
+    font-style: italic;
+    font-weight: 500;
+  }
+  .cst-placeholder-slot .cst-spine-side {
+    opacity: 0.5;
+  }
+
+  .cst-carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    margin-top: 0.5rem;
+  }
+
+  .cst-turn-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    border: none;
+    background: var(--brown-tape);
+    color: var(--vintage-sky);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px color-mix(in srgb, black 35%, transparent);
+  }
+
+  .cst-turn-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cst-face-dots {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .cst-face-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--brown-tape) 35%, transparent);
+  }
+
+  .cst-face-dot.is-active {
+    background: var(--brown-tape);
+  }
+
+  @media (max-width: 26.25rem) {
+    /* Mission 20: the reference's own demo page was never tested
+       below its 30rem container -- at this site's actual 320/375px
+       shelf-screen widths (inside .cst-card's own narrower mobile
+       layout, see the existing @media rule at the bottom of this
+       file), the reference's fixed 18.5rem/20rem carousel and 23rem
+       stage genuinely overflowed .cst-screenShelf's own width and
+       pushed the turn controls off-frame -- confirmed by measurement,
+       not assumed. Scaled down proportionally (kept the same
+       width:height:stage-height ratio) rather than redesigning, per
+       the mission's own "fix minimally, flag it" instruction for
+       exactly this situation -- see MISSION_20_response.md. */
+    .cst-carousel-stage {
+      height: 14.5rem;
+      perspective: 38rem;
+    }
+    .cst-carousel {
+      width: 10.5rem;
+      height: 11.3rem;
+    }
+    .cst-face-0,
+    .cst-face-1,
+    .cst-face-2,
+    .cst-face-3 {
+      transform: rotateY(var(--cst-face-deg)) translateZ(5.25rem);
+    }
+    .cst-face-0 {
+      --cst-face-deg: 0deg;
+    }
+    .cst-face-1 {
+      --cst-face-deg: 90deg;
+    }
+    .cst-face-2 {
+      --cst-face-deg: 180deg;
+    }
+    .cst-face-3 {
+      --cst-face-deg: 270deg;
+    }
+    .cst-carousel-lid {
+      width: 6rem;
+      height: 1.7rem;
+      top: -0.85rem;
+    }
   }
 
   .cst-reels {
@@ -627,30 +953,6 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       transparent 10deg 20deg
     );
     box-shadow: inset 0 0 0 3px color-mix(in srgb, black 50%, transparent);
-  }
-
-  .cst-label {
-    background: var(--vintage-sky);
-    color: var(--brown-tape);
-    border-radius: 0.25rem;
-    padding: 0.3rem 0.4rem;
-    display: block;
-    text-align: left;
-  }
-
-  .cst-label-title {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 0.72rem;
-    font-weight: 600;
-    line-height: 1.15;
-  }
-
-  .cst-label-sides {
-    display: block;
-    font-size: 0.58rem;
-    opacity: 0.65;
-    margin-top: 0.1rem;
   }
 
   /* ===== SCREEN 2: open cassette ===== */
@@ -1290,6 +1592,16 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
   let ytApiLoadStarted = false;
   let ytApiReadyCallbacks: Array<() => void> = [];
   let currentVisibilityHandler: (() => void) | null = null;
+  // Mission 20: same dedup need as currentVisibilityHandler above --
+  // the carousel's drag-to-rotate listeners live on `window` (so a
+  // drag started on the carousel still tracks the pointer once it
+  // moves outside the carousel's own bounds), and `window` itself
+  // persists across Astro's soft navigations even though this
+  // component's DOM is torn down and rebuilt fresh each visit. A
+  // stable top-level function won't work here since each handler
+  // closes over this specific init's own carousel state.
+  let currentCarouselPointerMoveHandler: ((e: PointerEvent) => void) | null = null;
+  let currentCarouselPointerUpHandler: (() => void) | null = null;
 
   function ensureYtApiLoaded(onReady: () => void) {
     const w = window as any;
@@ -1348,12 +1660,100 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       showScreen(screenCassette);
     }
 
-    root.querySelectorAll<HTMLButtonElement>(".cst-box").forEach((box) => {
-      box.addEventListener("click", () => {
-        const index = parseInt(box.dataset.cassetteIndex ?? "0", 10);
+    // Mission 20: the carousel replaced .cst-box with .cst-spine for
+    // BOTH real and placeholder slots -- the [data-cassette-index]
+    // attribute selector is what distinguishes the 4 real cassette
+    // spines (face 0) from the 12 inert placeholder spines (faces
+    // 1-3), which never carry that attribute and so never match here
+    // (no listener is ever attached to them -- not even one that
+    // no-ops, per the mission's explicit "no click handler at all").
+    root.querySelectorAll<HTMLButtonElement>(".cst-spine[data-cassette-index]").forEach((spine) => {
+      spine.addEventListener("click", () => {
+        const index = parseInt(spine.dataset.cassetteIndex ?? "0", 10);
         openCassette(index);
       });
     });
+
+    // Mission 20: rotating 3D cassette carousel (Screen 1). Angle math
+    // and drag/snap logic are ported verbatim from the reference's own
+    // script -- only the element lookups changed, to this file's IDs.
+    const carouselEl = root.querySelector<HTMLElement>("#cstCarousel");
+    const carouselStage = root.querySelector<HTMLElement>("#cstCarouselStage");
+    const carouselDots = Array.from(
+      root.querySelectorAll<HTMLElement>("#cstCarouselFaceDots .cst-face-dot"),
+    );
+
+    if (carouselEl && carouselStage) {
+      const BASE_ANGLE = 24; // permanent offset so the next face's edge stays visible
+      const FACE_ANGLE = 90;
+      let currentFace = 0;
+
+      function carouselAngleFor(face: number, extra = 0) {
+        return -face * FACE_ANGLE + BASE_ANGLE + extra;
+      }
+
+      function updateCarousel() {
+        carouselEl!.style.transform = `rotateY(${carouselAngleFor(currentFace)}deg)`;
+        carouselDots.forEach((d, i) => d.classList.toggle("is-active", i === currentFace));
+      }
+      updateCarousel();
+
+      root.querySelector("#cstCarouselTurnRight")?.addEventListener("click", () => {
+        currentFace = (currentFace + 1) % 4;
+        updateCarousel();
+      });
+      root.querySelector("#cstCarouselTurnLeft")?.addEventListener("click", () => {
+        currentFace = (currentFace + 3) % 4;
+        updateCarousel();
+      });
+
+      let carouselDragging = false;
+      let carouselStartX = 0;
+      let carouselStartFace = 0;
+      let carouselDragDelta = 0;
+
+      function carouselPointerDown(x: number) {
+        carouselDragging = true;
+        carouselStartX = x;
+        carouselStartFace = currentFace;
+        carouselEl!.style.transition = "none";
+        carouselEl!.classList.add("is-dragging");
+      }
+      function carouselPointerMove(x: number) {
+        if (!carouselDragging) return;
+        carouselDragDelta = (x - carouselStartX) / 3.2;
+        carouselEl!.style.transform = `rotateY(${carouselAngleFor(carouselStartFace, carouselDragDelta)}deg)`;
+      }
+      function carouselPointerUp() {
+        if (!carouselDragging) return;
+        carouselDragging = false;
+        carouselEl!.style.transition = "";
+        carouselEl!.classList.remove("is-dragging");
+        const steps = Math.round(-carouselDragDelta / FACE_ANGLE);
+        currentFace = ((carouselStartFace + steps) % 4 + 4) % 4;
+        updateCarousel();
+      }
+
+      carouselStage.addEventListener("pointerdown", (e) => carouselPointerDown(e.clientX));
+
+      // pointermove/pointerup live on `window` (so a drag that moves
+      // outside the carousel's own bounds keeps tracking) -- deduped
+      // against the previous init's handlers, same pattern as
+      // currentVisibilityHandler above, since `window` persists across
+      // soft navigations even though this component's own DOM doesn't.
+      const onCarouselPointerMove = (e: PointerEvent) => carouselPointerMove(e.clientX);
+      const onCarouselPointerUp = () => carouselPointerUp();
+      if (currentCarouselPointerMoveHandler) {
+        window.removeEventListener("pointermove", currentCarouselPointerMoveHandler);
+      }
+      if (currentCarouselPointerUpHandler) {
+        window.removeEventListener("pointerup", currentCarouselPointerUpHandler);
+      }
+      currentCarouselPointerMoveHandler = onCarouselPointerMove;
+      currentCarouselPointerUpHandler = onCarouselPointerUp;
+      window.addEventListener("pointermove", currentCarouselPointerMoveHandler);
+      window.addEventListener("pointerup", currentCarouselPointerUpHandler);
+    }
 
     // Lado a / lado b toggle -- scoped per-panel so each cassette keeps
     // its own independent side state.
