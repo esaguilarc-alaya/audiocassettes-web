@@ -79,7 +79,21 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
 ---
 
 <div class="cst">
-  <div class="cst-app" id="cstApp">
+  <!--
+    Mission 15 fix: #cstApp (the actual Fullscreen API target) is kept
+    as an unstyled wrapper on purpose. Chrome's fullscreen UA
+    stylesheet forces the fullscreen element itself to
+    position:fixed/inset:0/width:100%/height:100% in a way no author
+    rule (confirmed even at high specificity) can override -- verified
+    by reading its computed style while fullscreen (still 1440x900,
+    not this file's intended card size). So instead of fighting that,
+    #cstApp:fullscreen becomes a full-viewport flex container that
+    CENTERS its .cst-card child, which keeps its own intrinsic
+    max-width/height sizing untouched -- the classic "letterboxed
+    video player" pattern (fullscreen the wrapper, size the content).
+  -->
+  <div id="cstApp">
+    <div class="cst-card">
     <!-- SCREEN 1: shelf of closed cassettes -->
     <div class="cst-screen is-active" id="cstScreenShelf">
       <div class="cst-topbar"><span></span><span>lado a / lado b</span><span></span></div>
@@ -273,6 +287,7 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
         </p>
       </div>
     </div>
+    </div>
   </div>
 </div>
 
@@ -289,7 +304,26 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
     margin-top: var(--space-5);
   }
 
-  .cst-app {
+  /* Mission 15 fix, corrected approach: an EARLIER version of this fix
+     tried an author `#cstApp:fullscreen { width; height; margin: auto }`
+     rule directly on the fullscreen target itself, on the assumption
+     that author normal-importance beats UA normal-importance (the same
+     cascade rule behind this project's established `[hidden]` fix).
+     That assumption was WRONG for this specific case, confirmed by
+     reading `getComputedStyle(app)` while actually fullscreen: width/
+     height/position stayed exactly at the UA's forced 100%/100%/fixed
+     values (1440x900 at that test size) -- Chrome's fullscreen UA
+     stylesheet wins here regardless (verified, not guessed twice).
+     So `#cstApp` (the actual .requestFullscreen() target) is now kept
+     as a bare, unstyled wrapper -- all the card's own sizing/
+     background/shadow live on the new `.cst-card` child instead, and
+     `#cstApp:fullscreen` only turns the WRAPPER into a full-viewport
+     flex container that centers that untouched, still-intrinsically-
+     sized card -- the same pattern real letterboxed video players use
+     (fullscreen the wrapper, size the content), which cannot be
+     defeated by the UA forcibly maximizing the wrapper itself, because
+     the wrapper filling the screen is exactly what we now want. */
+  .cst-card {
     position: relative;
     width: 100%;
     max-width: 26rem;
@@ -305,6 +339,23 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
     color: var(--vintage-sky);
     font-family: var(--font-body);
     box-shadow: 0 16px 40px color-mix(in srgb, black 45%, transparent);
+  }
+
+  #cstApp:fullscreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Letterbox fill behind the centered card -- the same dark
+       brown-tape/black derivation already used for this file's own
+       video-wrap gradient, not a new color. */
+    background: color-mix(in srgb, var(--brown-tape) 15%, black 85%);
+  }
+
+  /* ::backdrop as a fallback/defense-in-depth for the moment before
+     #cstApp's own fullscreen background paints -- same color, so
+     there's no visible mismatch either way. */
+  #cstApp::backdrop {
+    background: color-mix(in srgb, var(--brown-tape) 15%, black 85%);
   }
 
   .cst-screen {
@@ -887,10 +938,19 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
     height: 78%;
     display: flex;
     flex-direction: column;
+    /* Mission 15 fix: reviewer-reproduced (real Playwright click, not
+       JS-triggered) "element intercepts pointer events" on
+       #cstLyricsToggle, pointing at a <p> inside this drawer while it
+       was closed. Regardless of exact transform/size at any given
+       viewport, a closed drawer must never sit in the hit-testing path
+       -- this is the robust fix the mission asks for, not dependent on
+       getting a transform/height calculation exactly right. */
+    pointer-events: none;
   }
 
   .cst-lyrics-drawer.is-open {
     transform: translateY(0%);
+    pointer-events: auto;
   }
 
   .cst-drawer-handle {
@@ -957,7 +1017,7 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
   }
 
   @media (max-width: 26.25rem) {
-    .cst-app {
+    .cst-card {
       max-width: 100%;
       height: min(42rem, 88vh);
       border-radius: var(--radius-sm);
