@@ -973,6 +973,48 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     }
   }
 
+  /* Mission 22: the gap below .cst-carousel-controls (fixed in Mission
+     21) turned out to be slack-dependent, not guaranteed -- .cst-card's
+     height is min(44rem, 82vh), driven by the *viewport's* height, while
+     .cst-screen fills it via inset:0 without growing to fit content, and
+     the carousel's own rem-based dimensions above don't respond to
+     viewport height at all. On a short real-device viewport (address-bar
+     chrome eating into the usable height), the fixed content height
+     (measured ~466px at the mobile carousel size) can exceed the
+     card's actual height, leaving zero or negative gap -- confirmed by
+     measurement at 320x480 before this fix (-11px, i.e. the controls'
+     own bottom edge past the card's bottom edge, .cst-screen scrolling
+     to compensate) -- see MISSION_22_response.md. Fixed by shrinking the
+     carousel further, in the same proportional spirit as the
+     max-width rule above, whenever the viewport itself is short enough
+     that the unshrunk carousel wouldn't leave room -- rather than
+     leaning on overflow-y:auto scrolling to reach the turn buttons,
+     which the mission calls out as a worse experience than a smaller
+     carousel that just fits. Threshold and scale picked empirically
+     (verified at 320x480, 375x550, 390x600, and re-checked that taller
+     phone viewports -- 667px+ -- never trigger this rule and keep the
+     Mission 20 mobile carousel size unchanged). */
+  @media (max-width: 26.25rem) and (max-height: 37.5rem) {
+    .cst-carousel-stage {
+      height: 10.5rem;
+    }
+    .cst-carousel {
+      width: 7.6rem;
+      height: 8.2rem;
+    }
+    .cst-face-0,
+    .cst-face-1,
+    .cst-face-2,
+    .cst-face-3 {
+      transform: rotateY(var(--cst-face-deg)) translateZ(3.8rem);
+    }
+    .cst-carousel-lid {
+      width: 4.35rem;
+      height: 1.25rem;
+      top: -0.62rem;
+    }
+  }
+
   .cst-reels {
     display: flex;
     justify-content: space-evenly;
