@@ -31,12 +31,15 @@ import CassettePlayer from "../components/CassettePlayer.astro";
  *
  * Mission 17 (missions/MISSION_17_video-sync.md): "Tarde En La Mañana"
  * only, adds `videoId` (the real, approved YouTube video) and
- * `videoOffset` (2.8s — Esteban's own stated number after listening,
- * not recomputed here) — the video's own soundtrack starts 2.8s later
- * than our uploaded audio, so it plays muted and kept in sync against
- * the real <audio> element (see CassettePlayer.astro). "El Ayer" and
- * every placeholder track are untouched, still showing the placeholder
+ * `videoOffset` — the video's own soundtrack starts later than our
+ * uploaded audio, so it plays muted and kept in sync against the real
+ * <audio> element (see CassettePlayer.astro). "El Ayer" and every
+ * placeholder track are untouched, still showing the placeholder
  * video box exactly as Mission 14/15/16 built it.
+ *
+ * Mission 18 (missions/MISSION_18_video-fixes-and-scrubber.md):
+ * `videoOffset` corrected from 2.8s to 2.4s — Esteban's own stated
+ * number after watching the real sync, not recomputed here.
  */
 const cassettes = [
   {
@@ -50,7 +53,7 @@ const cassettes = [
         dur: "5:06",
         audioSrc: "/audio/tarde-en-la-manana.mp3",
         videoId: "4gBwAFS-iXs",
-        videoOffset: 2.8,
+        videoOffset: 2.4,
       },
       {
         title: "El Ayer",

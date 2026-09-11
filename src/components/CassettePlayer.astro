@@ -361,7 +361,7 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
         <div class="cst-player-loc" id="cstPlayerLoc">—</div>
       </div>
       <div class="cst-scrub-wrap">
-        <div class="cst-scrub-bar">
+        <div class="cst-scrub-bar" id="cstScrubBar">
           <div class="cst-scrub-fill"></div>
         </div>
         <div class="cst-time-row">
@@ -780,7 +780,13 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     margin: 0.25rem 1.1rem 0;
     border-radius: 0.9rem;
     overflow: hidden;
-    aspect-ratio: 16 / 10;
+    /* Mission 18 fix (Problem 2): was 16/10 (an arbitrary placeholder
+       shape chosen in Mission 14, before any real video existed).
+       "Tarde En La Mañana"'s real video is a standard 16/9 upload --
+       matching the container to it is what actually removes the
+       letterboxing gap, confirmed after fixing the CSS-selector bug
+       below (which was the other, more severe part of Problem 2). */
+    aspect-ratio: 16 / 9;
     background: radial-gradient(
       circle at 30% 20%,
       color-mix(in srgb, var(--brown-tape) 65%, black 35%),
@@ -810,22 +816,41 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
      now [hidden]-toggled, so both need the explicit override below
      (the established fix, Missions 03/08/12/16, for the real cascade
      bug where an unconditional author `display` rule beats the UA's
-     `[hidden]{display:none}` regardless of specificity). */
+     `[hidden]{display:none}` regardless of specificity).
+
+     Mission 18 fix (Problem 2 -- this took two layers to actually fix,
+     both confirmed via direct inspection against the real embed, not
+     guessed): `new YT.Player(el, config)` REPLACES the given element
+     with the real <iframe> -- it does NOT insert an iframe as el's
+     child. The replacement iframe inherits el's plain id/class
+     (confirmed: `<iframe id="cstYtHost" class="cst-yt-host">` ends up
+     a direct child of `.cst-video-wrap`, not nested inside a wrapper
+     div) -- so a previous version of this file's `.cst-yt-host iframe
+     { width:100%; ... }` (a descendant selector) could never match
+     anything once the real API had run. Fixing that alone still
+     wasn't enough: this rule below (targeting `.cst-yt-host` directly)
+     matches the replacement iframe *by class name*, but Astro scopes
+     component CSS via a `data-astro-cid-*` attribute baked into this
+     component's own server-rendered elements -- and the compiled
+     selector requires that attribute too. The replacement iframe,
+     created by YouTube's own script rather than by Astro, never gets
+     it. Confirmed via `getComputedStyle`: `position` came back
+     "static", not "absolute", and the iframe rendered at YouTube's
+     own default 640x360 attribute size. This rule below still
+     correctly sizes the ORIGINAL div during the brief window before
+     the API replaces it (avoiding a flash of an unstyled box) -- the
+     real, live iframe's sizing comes from `sizeYtHostEl()`'s inline
+     styles instead, which aren't subject to CSS scoping at all. */
   .cst-yt-host {
-    position: absolute;
-    inset: 0;
-  }
-
-  .cst-yt-host[hidden] {
-    display: none;
-  }
-
-  .cst-yt-host iframe {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     border: 0;
+  }
+
+  .cst-yt-host[hidden] {
+    display: none;
   }
 
   .cst-placeholder-scene {
@@ -978,6 +1003,10 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     border-radius: 999px;
     background: color-mix(in srgb, var(--vintage-sky) 18%, transparent);
     cursor: pointer;
+    /* Mission 18: without this, a touch drag on this bar also scrolls
+       the page underneath it on mobile, fighting the pointermove-based
+       seek preview below. */
+    touch-action: none;
   }
 
   .cst-scrub-fill {
@@ -1392,7 +1421,49 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     let currentVideoId: string | null = null;
     let currentVideoOffset = 0;
 
-    const ytHost = root.querySelector<HTMLElement>("#cstYtHost");
+    // Mission 18 fix: NOT a cached reference. `new YT.Player(el, ...)`
+    // replaces `el` with the real <iframe> (confirmed via direct DOM
+    // inspection against the real embed -- see the .cst-yt-host CSS
+    // comment). A `const` captured once, before that replacement,
+    // would keep pointing at the original, now-detached div forever --
+    // toggling `hidden` on it would silently do nothing to the actual,
+    // still-visible-on-screen iframe. Looking it up fresh by class
+    // (which the replacement iframe inherits) every time it's needed
+    // always finds whichever element -- div or iframe -- is currently
+    // live in the DOM.
+    function getYtHostEl(): HTMLElement | null {
+      return root.querySelector<HTMLElement>(".cst-yt-host");
+    }
+
+    // Mission 18 fix (Problem 2, the real root cause, confirmed via
+    // direct computed-style inspection against the real embed): this
+    // component's CSS is scoped by Astro (a `data-astro-cid-*`
+    // attribute baked into the server-rendered HTML, with selectors
+    // compiled to require it). The original server-rendered div DOES
+    // carry that attribute, so `.cst-yt-host { position: absolute;
+    // ... }` correctly applies to it -- but the real YT.Player
+    // constructor REPLACES that div with a brand-new <iframe> created
+    // by YouTube's own script, which only copies the plain `id`/
+    // `class` attributes, not Astro's scoping attribute. The result:
+    // the scoped CSS rule's selector still matches by class name, but
+    // never actually applies, because the compiled selector also
+    // requires an attribute the replacement element doesn't have.
+    // Measured directly: `getComputedStyle(iframe).position` came back
+    // "static", not "absolute", and the iframe rendered at YouTube's
+    // own default 640x360 attribute size instead of filling its box.
+    // Inline styles aren't subject to CSS scoping at all, so they're
+    // the reliable fix regardless of which element (div or iframe) is
+    // currently live.
+    function sizeYtHostEl() {
+      const el = getYtHostEl();
+      if (!el) return;
+      el.style.position = "absolute";
+      el.style.inset = "0";
+      el.style.width = "100%";
+      el.style.height = "100%";
+      el.style.border = "0";
+    }
+
     const placeholderScene = root.querySelector<HTMLElement>("#cstPlaceholderScene");
 
     function applyVideoPlayback(shouldPlay: boolean) {
@@ -1420,16 +1491,19 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     function openVideoForTrack(videoId: string, offset: number) {
       currentVideoId = videoId;
       currentVideoOffset = offset;
-      ytHost?.removeAttribute("hidden");
+      getYtHostEl()?.removeAttribute("hidden");
       placeholderScene?.setAttribute("hidden", "");
       ensureYtApiLoaded(() => {
         // The user may have switched tracks (or left this page) while
         // the API was still loading -- only proceed if this video is
-        // still the one actually open.
-        if (currentVideoId !== videoId || !ytHost) return;
+        // still the one actually open. Looked up fresh here too: this
+        // callback can fire well after the synchronous call above, so
+        // re-querying is what guarantees we still have the live node.
+        const hostEl = getYtHostEl();
+        if (currentVideoId !== videoId || !hostEl) return;
         if (!ytPlayer) {
           try {
-            ytPlayer = new (window as any).YT.Player(ytHost, {
+            ytPlayer = new (window as any).YT.Player(hostEl, {
               videoId,
               playerVars: {
                 mute: 1,
@@ -1438,10 +1512,30 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
                 modestbranding: 1,
                 playsinline: 1,
                 rel: 0,
+                // Mission 18 fix (Problem 1): without these, the
+                // postMessage-based JS API commands below (playVideo,
+                // seekTo, mute) can be silently ignored by the real
+                // embed -- our own play()/seekTo() calls never throw,
+                // but the iframe just sits on its native "unstarted"
+                // thumbnail/play-button UI forever. `enablejsapi` is
+                // normally set automatically by the YT.Player()
+                // constructor, but is included explicitly here as
+                // belt-and-suspenders since this exact symptom is what
+                // was reported; `origin` matching the page's own
+                // origin is YouTube's own documented recommendation
+                // for postMessage-API embeds and is the more likely
+                // actual fix, per this mission's own hypothesis.
+                enablejsapi: 1,
+                origin: window.location.origin,
               },
               events: {
                 onReady: () => {
                   ytPlayerReady = true;
+                  // Guaranteed to run after the real API has finished
+                  // any element replacement, so this always finds and
+                  // sizes the actual live iframe -- see sizeYtHostEl's
+                  // own comment for why this can't be pure CSS.
+                  sizeYtHostEl();
                   try {
                     ytPlayer.mute();
                   } catch {
@@ -1452,15 +1546,23 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
                 },
               },
             });
+            // Belt-and-suspenders: size immediately too, in case the
+            // element replacement already happened synchronously
+            // within the constructor call above (timing not
+            // guaranteed by the API's own docs) -- onReady's own call
+            // above is what's actually relied upon; this just avoids
+            // a possible brief flash at the wrong size if it doesn't.
+            sizeYtHostEl();
           } catch {
             // Construction failed for some reason this sandbox can't
             // reproduce (network-restricted, per the mission's own
             // stated verification limit) -- fall back to the
             // placeholder rather than leaving a blank box.
-            ytHost?.setAttribute("hidden", "");
+            hostEl.setAttribute("hidden", "");
             placeholderScene?.removeAttribute("hidden");
           }
         } else if (ytPlayerReady) {
+          sizeYtHostEl();
           resyncVideoToAudio();
           applyVideoPlayback(!!audioEl && !audioEl.paused);
         }
@@ -1469,7 +1571,7 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
 
     function closeVideoForTrack() {
       currentVideoId = null;
-      ytHost?.setAttribute("hidden", "");
+      getYtHostEl()?.setAttribute("hidden", "");
       placeholderScene?.removeAttribute("hidden");
       applyVideoPlayback(false);
     }
@@ -1642,6 +1744,65 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     }
     prevBtn?.addEventListener("click", () => goToRealTrack(-1));
     nextBtn?.addEventListener("click", () => goToRealTrack(1));
+
+    // Mission 18 (Problem 4): a real seekable scrubber -- tap anywhere
+    // to jump, drag the fill/handle to preview then commit on release.
+    // Pointer events cover mouse and touch with one code path (not the
+    // older separate mouse+touch event pattern). Guarded on
+    // `currentTrackHasAudio` throughout, same pattern as every other
+    // real-audio feature -- a placeholder track's scrubber stays
+    // exactly as inert as it's always been.
+    const scrubBar = root.querySelector<HTMLElement>("#cstScrubBar");
+    let isDraggingScrub = false;
+
+    function scrubFractionFromEvent(e: PointerEvent): number {
+      const rect = scrubBar!.getBoundingClientRect();
+      const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+      return rect.width > 0 ? x / rect.width : 0;
+    }
+
+    // Preview only -- moves the visual fill/elapsed label, never
+    // touches audio.currentTime (so a drag that ends up back where it
+    // started, or is cancelled, never actually seeks).
+    function previewScrub(fraction: number) {
+      if (scrubFill) scrubFill.style.width = `${fraction * 100}%`;
+      if (playerElapsed && audioEl && isFinite(audioEl.duration)) {
+        playerElapsed.textContent = formatElapsed(fraction * audioEl.duration);
+      }
+    }
+
+    // The single actual seek point -- called on pointerup for both a
+    // plain tap (down+up, no move in between -- "immediately") and the
+    // end of a real drag ("commits on release"), never during
+    // pointermove. Also re-syncs the video via the exact same
+    // resyncVideoToAudio() Mission 17 already uses for drift
+    // correction, per this mission's own instruction not to duplicate
+    // that logic.
+    function commitScrub(fraction: number) {
+      if (!audioEl || !currentTrackHasAudio || !isFinite(audioEl.duration)) return;
+      audioEl.currentTime = fraction * audioEl.duration;
+      if (currentVideoId) resyncVideoToAudio();
+    }
+
+    scrubBar?.addEventListener("pointerdown", (e) => {
+      if (!currentTrackHasAudio) return;
+      isDraggingScrub = true;
+      scrubBar.setPointerCapture(e.pointerId);
+      previewScrub(scrubFractionFromEvent(e));
+    });
+    scrubBar?.addEventListener("pointermove", (e) => {
+      if (!isDraggingScrub || !currentTrackHasAudio) return;
+      previewScrub(scrubFractionFromEvent(e));
+    });
+    scrubBar?.addEventListener("pointerup", (e) => {
+      if (!isDraggingScrub) return;
+      isDraggingScrub = false;
+      if (!currentTrackHasAudio) return;
+      commitScrub(scrubFractionFromEvent(e));
+    });
+    scrubBar?.addEventListener("pointercancel", () => {
+      isDraggingScrub = false;
+    });
 
     // Play/pause + tap-overlay: real <audio> control when a real track
     // is loaded, else Mission 14/15's exact synthetic toggle.
