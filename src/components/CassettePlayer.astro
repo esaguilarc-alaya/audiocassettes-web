@@ -1,7 +1,10 @@
 ---
 /**
  * CassettePlayer — Mission 14
- * (missions/MISSION_14_lado-a-lado-b-player.md).
+ * (missions/MISSION_14_lado-a-lado-b-player.md), fullscreen fix in
+ * Mission 15 (missions/MISSION_15_fullscreen-fix.md), real audio for
+ * two lado-A tracks added in Mission 16
+ * (missions/MISSION_16_real-audio-lado-a.md).
  *
  * Ports reference/lado-a-lado-b-player-flow-reference.html's approved
  * shelf -> cassette -> player flow faithfully:
@@ -13,13 +16,13 @@
  *     toggle, and an expandable (non-synced) lyrics drawer.
  *
  * Everything for screens 2/3 is pre-rendered server-side (one hero +
- * two tracklists per cassette, all but the first hidden) and the
- * client script only toggles `hidden`/`.is-active`, matching the
- * established pattern in ViewMasterShelf.astro (frameStacks/dotsGroups
- * toggled via [hidden] + data-* indices) rather than shipping a
- * parallel JS data blob — the player screen's fields are filled in
- * from the clicked track row's own rendered text, not a second copy
- * of the data.
+ * two tracklists per cassette, all but the first hidden; one lyrics
+ * block per track, all but the first hidden) and the client script
+ * only toggles `hidden`/`.is-active`, matching the established pattern
+ * in ViewMasterShelf.astro (frameStacks/dotsGroups toggled via
+ * [hidden] + data-* indices) rather than shipping a parallel JS data
+ * blob — the player screen's fields are filled in from the clicked
+ * track row's own rendered text/data-*, not a second copy of the data.
  *
  * Screen-transition mechanics (three `.cst-screen`s, only `.is-active`
  * ever toggled, no direction logic) are ported exactly as authored in
@@ -31,20 +34,34 @@
  * so it is ported as-is rather than "corrected" into a more
  * conventional back-slides-from-left pattern on my own judgment.
  *
- * PLACEHOLDER DATA (Rule 3): the four cassettes/tracks below are
- * Esteban's own approved sample data from the reference file, carried
- * over unchanged — not invented here. Real cassette/track data is a
+ * PLACEHOLDER DATA (Rule 3): every cassette/track except "Tarde En La
+ * Mañana" and "El Ayer" (lado A, first cassette) is still Esteban's
+ * approved sample data from the reference file, carried over unchanged
+ * — not invented here. Real cassette/track data for the rest is a
  * later mission once recordings exist.
- * TODO: replace with real cassette/track data once Esteban provides it.
+ * TODO: replace the remaining placeholder cassette/track data once
+ * Esteban provides more real recordings.
  *
- * Deliberately NOT in this mission (see mission's Scope (out)):
- * no real <audio>/<video> elements, no Media Session API, no
- * cassette-box visual-authenticity redesign, no time-synced lyrics.
+ * Mission 16 real-audio behavior only applies to tracks whose `Track`
+ * object (in lado-a-lado-b.astro) carries an `audioSrc`. Every other
+ * track is guarded to keep exactly Mission 14/15's visual-only
+ * behavior (synthetic play/pause toggle, static scrubber/duration,
+ * decorative prev/next, generic placeholder lyrics note) — see
+ * `openTrackFromRow`'s two branches below.
+ *
+ * Deliberately NOT in this mission (see Mission 16's Scope (out)):
+ * no cassette-box visual-authenticity redesign, no real video, no
+ * time-synced/karaoke lyrics highlighting, no Wake Lock/Web Audio API,
+ * no persistent-across-full-page-navigation playback (a known,
+ * explicitly-accepted limitation — see MISSION_16_response.md).
  */
 interface Track {
   title: string;
   loc: string;
   dur: string;
+  /** Mission 16: only "Tarde En La Mañana" and "El Ayer" have this so
+   *  far. Every real-audio code path below is guarded on its presence. */
+  audioSrc?: string;
 }
 
 interface Cassette {
@@ -76,6 +93,89 @@ const DISK_COLORS = [
 // play/pause icon is server-rendered as the pause glyph; the client
 // script swaps it on click.
 const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+
+// Mission 16: real, verbatim lyrics for the two tracks that now have
+// real audio, keyed by exact track title (matches lado-a-lado-b.astro's
+// data). Blank lines from the mission's source text are kept as `""`
+// entries (rendered as `&nbsp;` spacer paragraphs, same convention the
+// placeholder lyrics already use) so the stanza breaks survive. No line
+// is ever marked active/highlighted here -- these are real, static,
+// NOT time-synced text (the mission's own explicit decision), so
+// nothing should visually suggest sync exists.
+const REAL_LYRICS: Record<string, string[]> = {
+  "Tarde En La Mañana": [
+    "En la mesa te deje las llaves",
+    "Los cigarros se quedaron en la acera",
+    "Era ya tarde en la mañana",
+    "Y olvide decirte que te amaba",
+    "",
+    "Conte los pasos mientras me alejaba",
+    "Tal vez por las maletas o por tu mirada",
+    "Cada paso se me hacía más largo",
+    "Cada recuerdo se pasaba a mi conciencia",
+    "",
+    "Y deje la cama sin tender",
+    "Tal vez por la mentira de volver",
+    "Y deje mi reflejo en el espejo",
+    "No te puedes deshacer de mi",
+    "",
+    "Yo no quiero despertarte",
+    "Quiero que te quedes en mi cama",
+    "Que me busques en la Ventana",
+    "Que me esperes hasta que vuelva a abrir la puerta",
+    "",
+    "Tal vez no nos confiamos las verdades",
+    "A veces la vida pasa más a prisa",
+    "De lo que tardan en pasar nuestras tragedias",
+  ],
+  "El Ayer": [
+    "Fueron quedando vacías las calles de mi ciudad",
+    "Donde aún resuenan las fiestas de las que ya no hay mas",
+    "",
+    "Con la mirada perdida me encontraron otra vez",
+    "Yo estaba pensando que siempre es mejor el ayer",
+    "",
+    "Yo quiero todo de vuelta me lo quitaron sin darme cuenta",
+    "Yo quiero vivirlo todo para asegurarme de que si es mejor el ayer",
+    "",
+    "Se fueron perdiendo cosas canciones de alguna persona o fotos que ya no recuerdo",
+    "",
+    "Yo quiero todo de vuelta me lo quitaron sin darme cuenta",
+    "Yo quiero vivirlo todo para asegurarme de que si es mejor…",
+    "",
+    "El ayer que ya nunca volverá, ya lo sé, ya nunca volverá",
+    "",
+    "Yo quiero todo de vuelta me lo quitaron sin darme cuenta",
+    "Yo quiero vivirlo todo para asegurarme de que si es mejor…",
+  ],
+};
+
+// The exact placeholder lyrics Mission 14/15 already shipped (including
+// the one demo-highlighted line) — reused verbatim for every track that
+// still has no real lyrics, one independent copy per track so each can
+// be shown/hidden without affecting any other.
+const PLACEHOLDER_LYRICS: { text: string; active?: boolean }[] = [
+  { text: "bajo el cielo abierto, cerca de la cima" },
+  { text: "grabamos lo que siente esta guitarra", active: true },
+  { text: "el viento se lleva la letra a otro lado" },
+  { text: "y el cassette guarda lo que nunca dijimos" },
+  { text: "" },
+  { text: "rebobiná si querés, volvé al principio" },
+  { text: "esta cinta no se acaba, solo cambia de lado" },
+];
+
+// One stable key per track (cassette index + side + track index),
+// shared between each track row (data-lyrics-key) and its matching
+// lyrics block below, so the client script can show/hide by simple
+// string match -- same [hidden]+data-* pattern as the cassette panels.
+function lyricsKeyFor(cassetteIndex: number, side: "a" | "b", trackIndex: number) {
+  return `${cassetteIndex}-${side}-${trackIndex}`;
+}
+
+const lyricsBlocks = cassettes.flatMap((c, i) => [
+  ...c.a.map((t, ti) => ({ key: lyricsKeyFor(i, "a", ti), track: t })),
+  ...c.b.map((t, ti) => ({ key: lyricsKeyFor(i, "b", ti), track: t })),
+]);
 ---
 
 <div class="cst">
@@ -159,6 +259,9 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
                   data-title={t.title}
                   data-loc={t.loc}
                   data-dur={t.dur}
+                  data-audio-src={t.audioSrc}
+                  data-cassette-title={c.title}
+                  data-lyrics-key={lyricsKeyFor(i, "a", ti)}
                 >
                   <span class="cst-track-num">{ti + 1}</span>
                   <span class="cst-track-meta">
@@ -182,6 +285,9 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
                   data-title={t.title}
                   data-loc={t.loc}
                   data-dur={t.dur}
+                  data-audio-src={t.audioSrc}
+                  data-cassette-title={c.title}
+                  data-lyrics-key={lyricsKeyFor(i, "b", ti)}
                 >
                   <span class="cst-track-num">{ti + 1}</span>
                   <span class="cst-track-meta">
@@ -242,12 +348,12 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
           <div class="cst-scrub-fill"></div>
         </div>
         <div class="cst-time-row">
-          <span>1:12</span>
+          <span id="cstPlayerElapsed">1:12</span>
           <span id="cstPlayerDur">3:41</span>
         </div>
       </div>
       <div class="cst-controls">
-        <button type="button" class="cst-secondary" aria-label="anterior">
+        <button type="button" class="cst-secondary" id="cstPrevBtn" aria-label="anterior">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 6h2v12H6zM20 6v12l-8.5-6z" />
           </svg>
@@ -255,7 +361,7 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
         <button type="button" class="cst-play-pause" id="cstPlayBtn" aria-label="pausa">
           <svg viewBox="0 0 24 24" fill="currentColor" id="cstPlayIcon" set:html={PAUSE_ICON} />
         </button>
-        <button type="button" class="cst-secondary" aria-label="siguiente">
+        <button type="button" class="cst-secondary" id="cstNextBtn" aria-label="siguiente">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M16 6h2v12h-2zM4 6v12l8.5-6z" />
           </svg>
@@ -273,22 +379,39 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
           <h3 id="cstLyricsDrawerTitle">letras</h3>
           <button type="button" id="cstCloseDrawer" aria-label="cerrar">✕</button>
         </div>
-        <div class="cst-lyrics-body">
-          <p class="cst-lyric-line">bajo el cielo abierto, cerca de la cima</p>
-          <p class="cst-lyric-line is-active">grabamos lo que siente esta guitarra</p>
-          <p class="cst-lyric-line">el viento se lleva la letra a otro lado</p>
-          <p class="cst-lyric-line">y el cassette guarda lo que nunca dijimos</p>
-          <p class="cst-lyric-line">&nbsp;</p>
-          <p class="cst-lyric-line">rebobiná si querés, volvé al principio</p>
-          <p class="cst-lyric-line">esta cinta no se acaba, solo cambia de lado</p>
-        </div>
-        <p class="cst-lyrics-note">
-          Letra de ejemplo — panel simple, sin sincronización por ahora.
-        </p>
+        {
+          lyricsBlocks.map(({ key, track }, idx) => {
+            const real = REAL_LYRICS[track.title];
+            return (
+              <div class="cst-lyrics-block" data-lyrics-key={key} hidden={idx !== 0}>
+                <div class="cst-lyrics-body">
+                  {real
+                    ? real.map((line) => (
+                        <p class="cst-lyric-line">{line === "" ? " " : line}</p>
+                      ))
+                    : PLACEHOLDER_LYRICS.map((l) => (
+                        <p class:list={["cst-lyric-line", { "is-active": l.active }]}>
+                          {l.text === "" ? " " : l.text}
+                        </p>
+                      ))}
+                </div>
+                {!real && (
+                  <p class="cst-lyrics-note">
+                    Letra de ejemplo — panel simple, sin sincronización por ahora.
+                  </p>
+                )}
+              </div>
+            );
+          })
+        }
       </div>
     </div>
     </div>
   </div>
+  <!-- Mission 16: a single real <audio> element, reused across track
+       opens (never recreated per click) -- no native controls, the
+       custom UI above drives it entirely. -->
+  <audio id="cstAudio" preload="none"></audio>
 </div>
 
 <style>
@@ -988,6 +1111,25 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
     cursor: pointer;
   }
 
+  /* Mission 16: one block per track (server-rendered, [hidden]-toggled
+     -- same pattern as .cst-cassette-panel). Needs its own flex column
+     so its .cst-lyrics-body child can still be the scrollable region
+     within the drawer's remaining space, same as the single static
+     block did before. The explicit [hidden] override is the
+     established fix (Missions 03/08/12) for the real cascade bug where
+     an unconditional author `display` rule beats the UA's
+     `[hidden]{display:none}` regardless of specificity. */
+  .cst-lyrics-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .cst-lyrics-block[hidden] {
+    display: none;
+  }
+
   .cst-lyrics-body {
     padding: 1.2rem 1.5rem 2rem;
     overflow-y: auto;
@@ -1085,6 +1227,10 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
       });
     });
 
+    // Back navigation never touches audio playback (Mission 16 scope
+    // item 7) -- these two handlers only ever call showScreen(), by
+    // construction, so a real track playing when the user taps back
+    // just keeps playing.
     root.querySelector("#cstBackToShelf")?.addEventListener("click", () => showScreen(screenShelf));
     root
       .querySelector("#cstBackToCassette")
@@ -1095,39 +1241,210 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
     const playerTitle = root.querySelector<HTMLElement>("#cstPlayerTitle");
     const playerLoc = root.querySelector<HTMLElement>("#cstPlayerLoc");
     const playerDur = root.querySelector<HTMLElement>("#cstPlayerDur");
+    const playerElapsed = root.querySelector<HTMLElement>("#cstPlayerElapsed");
     const videoPlaceholderLabel = root.querySelector<HTMLElement>("#cstVideoPlaceholderLabel");
     const lyricsDrawerTitle = root.querySelector<HTMLElement>("#cstLyricsDrawerTitle");
+    const scrubFill = root.querySelector<HTMLElement>(".cst-scrub-fill");
+    const lyricsBlockEls = Array.from(root.querySelectorAll<HTMLElement>(".cst-lyrics-block"));
+    const audioEl = root.querySelector<HTMLAudioElement>("#cstAudio");
 
-    root.querySelectorAll<HTMLButtonElement>(".cst-track-row").forEach((row) => {
-      row.addEventListener("click", () => {
-        const title = row.dataset.title ?? "";
-        const loc = row.dataset.loc ?? "";
-        const dur = row.dataset.dur ?? "";
-        if (playerTitle) playerTitle.textContent = title;
-        if (playerLoc) playerLoc.textContent = `grabado en ${loc} · las cintas`;
-        if (playerDur) playerDur.textContent = dur;
-        if (videoPlaceholderLabel) videoPlaceholderLabel.textContent = `video: ${loc} (placeholder)`;
-        if (lyricsDrawerTitle) lyricsDrawerTitle.textContent = `letras — ${title}`;
-        showScreen(screenPlayer);
-      });
-    });
-
-    // Player controls -- visual/interactive state only, no real
-    // playback (Scope (out): no real audio/video this mission).
     const playBtn = root.querySelector<HTMLButtonElement>("#cstPlayBtn");
     const playIcon = root.querySelector<SVGElement>("#cstPlayIcon");
     const tapOverlay = root.querySelector<HTMLElement>("#cstTapOverlay");
+    const prevBtn = root.querySelector<HTMLButtonElement>("#cstPrevBtn");
+    const nextBtn = root.querySelector<HTMLButtonElement>("#cstNextBtn");
     const PLAY_PATH = '<path d="M8 5v14l11-7z"></path>';
     const PAUSE_PATH = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"></path>';
 
-    let playing = true;
-    function setPlaying(p: boolean) {
-      playing = p;
-      if (playIcon) playIcon.innerHTML = playing ? PAUSE_PATH : PLAY_PATH;
-      tapOverlay?.classList.toggle("is-hidden", playing);
+    // Elapsed time floors (conventional for a playback position -- it
+    // should show "complete seconds so far", never visually jump ahead
+    // of the actual audio). Total duration rounds instead -- flooring
+    // it would silently disagree with the mission's own pre-computed
+    // static `dur` values (e.g. "Tarde En La Mañana" is 305.8137s,
+    // which rounds to 5:06 as specified, but floors to 5:05) once
+    // `loadedmetadata` overwrites the static fallback with the real
+    // value. Caught by comparing the metadata-derived label against
+    // the mission's own stated duration during this mission's own
+    // verification, not assumed correct.
+    function formatElapsed(seconds: number): string {
+      if (!isFinite(seconds) || seconds < 0) return "0:00";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${String(s).padStart(2, "0")}`;
     }
-    playBtn?.addEventListener("click", () => setPlaying(!playing));
-    tapOverlay?.addEventListener("click", () => setPlaying(true));
+    function formatDuration(seconds: number): string {
+      if (!isFinite(seconds) || seconds < 0) return "0:00";
+      const total = Math.round(seconds);
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${m}:${String(s).padStart(2, "0")}`;
+    }
+
+    // Single icon-update function shared by BOTH the synthetic
+    // (placeholder-track) path and the real <audio> element's own
+    // play/pause/ended events -- "don't duplicate the logic" applies
+    // here too, not just to the Media Session handlers below.
+    function updatePlayIcon(isPlaying: boolean) {
+      if (playIcon) playIcon.innerHTML = isPlaying ? PAUSE_PATH : PLAY_PATH;
+      tapOverlay?.classList.toggle("is-hidden", isPlaying);
+    }
+
+    // Mission 14/15's original behavior, UNCHANGED: a single boolean
+    // shared across every still-placeholder track (opening a new
+    // placeholder track never resets it, matching the exact prior
+    // behavior this mission's acceptance criteria requires).
+    let syntheticPlaying = true;
+    function setSyntheticPlaying(p: boolean) {
+      syntheticPlaying = p;
+      updatePlayIcon(p);
+    }
+
+    // Mission 16 real-audio state -- only meaningful while a track
+    // with audioSrc is loaded.
+    let currentTrackHasAudio = false;
+    let currentTrackKey: string | null = null;
+
+    const realTrackRows = Array.from(
+      root.querySelectorAll<HTMLButtonElement>(".cst-track-row[data-audio-src]"),
+    );
+
+    if (audioEl) {
+      audioEl.addEventListener("play", () => {
+        updatePlayIcon(true);
+        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+      });
+      audioEl.addEventListener("pause", () => {
+        updatePlayIcon(false);
+        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+      });
+      audioEl.addEventListener("ended", () => {
+        updatePlayIcon(false);
+        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+      });
+      audioEl.addEventListener("loadedmetadata", () => {
+        if (currentTrackHasAudio && playerDur) playerDur.textContent = formatDuration(audioEl.duration);
+      });
+      audioEl.addEventListener("timeupdate", () => {
+        if (!currentTrackHasAudio) return;
+        const pct = audioEl.duration ? (audioEl.currentTime / audioEl.duration) * 100 : 0;
+        if (scrubFill) scrubFill.style.width = `${pct}%`;
+        if (playerElapsed) playerElapsed.textContent = formatElapsed(audioEl.currentTime);
+        if (
+          "mediaSession" in navigator &&
+          "setPositionState" in navigator.mediaSession &&
+          isFinite(audioEl.duration)
+        ) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: audioEl.duration,
+              position: audioEl.currentTime,
+              playbackRate: audioEl.playbackRate,
+            });
+          } catch {
+            // Some browsers throw transiently on an in-flux duration
+            // (e.g. right at track switch) -- not worth surfacing.
+          }
+        }
+      });
+    }
+
+    function openTrackFromRow(row: HTMLButtonElement) {
+      const audioSrc = row.dataset.audioSrc;
+      const title = row.dataset.title ?? "";
+      const loc = row.dataset.loc ?? "";
+      const dur = row.dataset.dur ?? "";
+      const cassetteTitle = row.dataset.cassetteTitle ?? "";
+      const lyricsKey = row.dataset.lyricsKey ?? "";
+
+      if (playerTitle) playerTitle.textContent = title;
+      if (playerLoc) playerLoc.textContent = `grabado en ${loc} · las cintas`;
+      if (videoPlaceholderLabel) videoPlaceholderLabel.textContent = `video: ${loc} (placeholder)`;
+      if (lyricsDrawerTitle) lyricsDrawerTitle.textContent = `letras — ${title}`;
+      lyricsBlockEls.forEach((block) =>
+        block.toggleAttribute("hidden", block.dataset.lyricsKey !== lyricsKey),
+      );
+
+      if (audioSrc && audioEl) {
+        // Real track: set src + play() in this same click/gesture
+        // context (needed for autoplay policies), drive everything
+        // from the audio element's own real events from here on.
+        currentTrackHasAudio = true;
+        currentTrackKey = lyricsKey;
+        if (playerDur) playerDur.textContent = dur; // fallback until loadedmetadata
+        if (playerElapsed) playerElapsed.textContent = "0:00";
+        if (scrubFill) scrubFill.style.width = "0%";
+        audioEl.src = audioSrc;
+        audioEl.play().catch(() => {});
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title,
+            artist: "Audiocassettes",
+            album: cassetteTitle,
+          });
+        }
+      } else {
+        // Placeholder track: Mission 14/15's exact visual-only
+        // behavior, untouched -- and per scope item 7, switching to a
+        // different track (this) is one of the few things allowed to
+        // stop a real track that was playing.
+        const wasPlayingReal = currentTrackHasAudio;
+        currentTrackHasAudio = false;
+        currentTrackKey = null;
+        if (audioEl && !audioEl.paused) {
+          audioEl.pause();
+          if (wasPlayingReal) setSyntheticPlaying(false);
+        }
+        if (playerDur) playerDur.textContent = dur;
+        if (playerElapsed) playerElapsed.textContent = "1:12"; // Mission 14/15's static value
+        if (scrubFill) scrubFill.style.width = ""; // clears inline width, reverts to the static 32% CSS default
+        if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+      }
+
+      showScreen(screenPlayer);
+    }
+
+    root.querySelectorAll<HTMLButtonElement>(".cst-track-row").forEach((row) => {
+      row.addEventListener("click", () => openTrackFromRow(row));
+    });
+
+    function goToRealTrack(delta: 1 | -1) {
+      if (!currentTrackHasAudio) return; // decorative no-op for placeholder tracks, matching Mission 14/15
+      const idx = realTrackRows.findIndex((r) => r.dataset.lyricsKey === currentTrackKey);
+      if (idx === -1) return;
+      const next = realTrackRows[(idx + delta + realTrackRows.length) % realTrackRows.length];
+      openTrackFromRow(next);
+    }
+    prevBtn?.addEventListener("click", () => goToRealTrack(-1));
+    nextBtn?.addEventListener("click", () => goToRealTrack(1));
+
+    // Play/pause + tap-overlay: real <audio> control when a real track
+    // is loaded, else Mission 14/15's exact synthetic toggle.
+    playBtn?.addEventListener("click", () => {
+      if (currentTrackHasAudio && audioEl) {
+        if (audioEl.paused) audioEl.play().catch(() => {});
+        else audioEl.pause();
+      } else {
+        setSyntheticPlaying(!syntheticPlaying);
+      }
+    });
+    tapOverlay?.addEventListener("click", () => {
+      if (currentTrackHasAudio && audioEl) audioEl.play().catch(() => {});
+      else setSyntheticPlaying(true);
+    });
+
+    // Media Session action handlers -- registered once, calling the
+    // exact same functions the on-page buttons call (no duplicated
+    // logic), guarded to no-op while no real track is loaded.
+    if (audioEl && "mediaSession" in navigator) {
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (currentTrackHasAudio) audioEl.play().catch(() => {});
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        if (currentTrackHasAudio) audioEl.pause();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => goToRealTrack(-1));
+      navigator.mediaSession.setActionHandler("nexttrack", () => goToRealTrack(1));
+    }
 
     // Lyrics drawer -- simple expand/collapse, no time-sync.
     const lyricsToggle = root.querySelector<HTMLButtonElement>("#cstLyricsToggle");
@@ -1150,10 +1467,12 @@ const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
       else document.exitFullscreen?.();
     });
 
-    // Reset to a known state (playing, shelf screen, side A, lyrics
-    // closed) so re-running init on a soft navigation back to this
-    // page doesn't leave stale state from a previous visit.
-    setPlaying(true);
+    // Reset to a known state (synthetic-playing, shelf screen, side A,
+    // lyrics closed) so re-running init on a soft navigation back to
+    // this page doesn't leave stale state from a previous visit. This
+    // is a fresh DOM/audio element each time (Astro unmounts on
+    // navigation), so there is no real-audio state to carry over.
+    setSyntheticPlaying(true);
   }
 
   // `astro:page-load` fires on initial load too once <ClientRouter />

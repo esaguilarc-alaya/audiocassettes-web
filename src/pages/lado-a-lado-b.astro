@@ -10,18 +10,45 @@ import CassettePlayer from "../components/CassettePlayer.astro";
  * demo data (Esteban already reviewed this exact set) — not invented
  * here. Real cassette/track data (recordings, real durations, real
  * lyrics) is a later mission once Esteban provides it.
- * TODO: replace with real cassette/track data once it exists.
+ * TODO: replace the remaining placeholder cassette/track data once
+ * more recordings exist.
+ *
+ * Mission 16 (missions/MISSION_16_real-audio-lado-a.md): the first
+ * cassette's lado A now has two real tracks with real audioSrc/lyrics
+ * (see CassettePlayer.astro's REAL_LYRICS) — Esteban's explicit
+ * decision, replacing the two placeholder tracks that were there.
+ * This cassette's title and every one of its tracks' `loc` (both
+ * sides) were renamed from "cerro chirripó" to "Audiocassettes" per
+ * that same decision; the `id: "cerro"` key itself is internal/not
+ * user-facing and was deliberately left unchanged.
+ *
+ * Judgment call, flagged per the mission's own instruction: "Niebla"
+ * (lado B, still a placeholder track, no real audio yet) had its
+ * `loc` renamed to "Audiocassettes" too, purely for consistency within
+ * this one cassette — Esteban only explicitly asked about lado A. If
+ * he'd rather leave "Niebla" as "cerro chirripó" until it also gets
+ * real audio, that's a one-line revert of this entry's `loc` value.
  */
 const cassettes = [
   {
     id: "cerro",
-    title: "grabaciones — cerro chirripó",
+    title: "grabaciones — Audiocassettes",
     loc: "las cintas · locación 1",
     a: [
-      { title: "Rewind (en el cerro)", loc: "cerro chirripó", dur: "3:41" },
-      { title: "Altura", loc: "cerro chirripó", dur: "2:58" },
+      {
+        title: "Tarde En La Mañana",
+        loc: "Audiocassettes",
+        dur: "5:06",
+        audioSrc: "/audio/tarde-en-la-manana.mp3",
+      },
+      {
+        title: "El Ayer",
+        loc: "Audiocassettes",
+        dur: "3:06",
+        audioSrc: "/audio/el-ayer.mp3",
+      },
     ],
-    b: [{ title: "Niebla", loc: "cerro chirripó", dur: "4:05" }],
+    b: [{ title: "Niebla", loc: "Audiocassettes", dur: "4:05" }],
   },
   {
     id: "playa",
