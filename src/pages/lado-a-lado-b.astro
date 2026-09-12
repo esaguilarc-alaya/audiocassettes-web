@@ -40,6 +40,19 @@ import CassettePlayer from "../components/CassettePlayer.astro";
  * Mission 18 (missions/MISSION_18_video-fixes-and-scrubber.md):
  * `videoOffset` corrected from 2.8s to 2.4s — Esteban's own stated
  * number after watching the real sync, not recomputed here.
+ *
+ * Mission 24 (missions/MISSION_24_liner-notes-screen.md): optional
+ * `credits` per cassette, feeding the new liner notes screen
+ * (CassettePlayer.astro). Real content, verbatim from the mission, only
+ * for "cerro" and "playa" -- every gap the mission explicitly left
+ * blank (musicos adicionales for cerro; the two missing musicians and
+ * the two unconfirmed track references for playa) is left exactly that
+ * blank, not filled in here. "ciudad"/"bosque" have no `credits` at
+ * all (left `undefined`) so CassettePlayer.astro renders its
+ * fully-placeholder liner screen for them -- this is deliberate: the
+ * "no invented content" rule is enforced by the data shape itself
+ * (absent field), not just by what happens to be typed into the
+ * template.
  */
 const cassettes = [
   {
@@ -63,6 +76,16 @@ const cassettes = [
       },
     ],
     b: [{ title: "Niebla", loc: "Audiocassettes", dur: "4:05" }],
+    credits: {
+      musicians: ["Esteban", "Gerson"],
+      // No "músicos adicionales" provided for this cassette -- left
+      // `undefined` so the component renders its single placeholder
+      // line, per the mission's explicit instruction.
+      technical: [
+        "Producido, grabado y mezclado por Alberto Ortiz en El Closet Studio",
+        "Masterizado por Manuel Mora en Mandrágora Studio",
+      ],
+    },
   },
   {
     id: "playa",
@@ -73,6 +96,21 @@ const cassettes = [
       { title: "Sal y sol", loc: "guanacaste", dur: "3:33" },
       { title: "Vuelta a casa", loc: "guanacaste", dur: "2:47" },
     ],
+    credits: {
+      musicians: ["Esteban", "Gerson"],
+      additionalMusicians: [
+        { name: "Sonia Bruno", role: "cello" },
+        { name: "Manuel Mora", role: "batería y teclados" },
+        { name: "Iván Salazar", role: "guitarras (pista(s) por confirmar)" },
+        { name: "Kumary Sawyers", role: "voz (pista(s) por confirmar)" },
+      ],
+      // Esteban said two more musicians are still missing for this
+      // cassette -- rendered as two placeholder lines, not guessed.
+      additionalMusiciansPlaceholderCount: 2,
+      technical: [
+        "Producido, grabado, mezclado y masterizado por Manuel Mora en Mandrágora Studio",
+      ],
+    },
   },
   {
     id: "ciudad",
@@ -80,6 +118,7 @@ const cassettes = [
     loc: "las cintas · locación 3",
     a: [{ title: "Casa de amigos", loc: "san josé", dur: "3:02" }],
     b: [{ title: "Luces de neón", loc: "san josé", dur: "3:50" }],
+    // No credits given yet -- `credits` left undefined on purpose.
   },
   {
     id: "bosque",
@@ -87,6 +126,7 @@ const cassettes = [
     loc: "las cintas · locación 4",
     a: [{ title: "Verde", loc: "monteverde", dur: "3:20" }],
     b: [{ title: "Camino angosto", loc: "monteverde", dur: "2:55" }],
+    // No credits given yet -- `credits` left undefined on purpose.
   },
 ];
 ---

@@ -71,12 +71,42 @@ interface Track {
   videoOffset?: number;
 }
 
+/** Mission 24: an additional (non-core) musician credit -- always has a
+ *  name, sometimes a role/note (see "playa"'s entries in
+ *  lado-a-lado-b.astro for the "(pista(s) por confirmar)" pattern). */
+interface CreditPerson {
+  name: string;
+  role?: string;
+}
+
+/** Mission 24: real album-credits content for the new liner notes
+ *  screen. Optional at the `Cassette` level on purpose -- when a
+ *  cassette has no `credits` at all, the liner markup below (a plain
+ *  `c.credits ? ... : ...` check per section) renders a fully
+ *  placeholder liner screen for it, so "no invented content" is
+ *  enforced by this field being absent, not by what happens to be
+ *  typed into the template. */
+interface Credits {
+  musicians: string[];
+  /** Absent (not just empty) means "none provided" -- renders the
+   *  single reserved-placeholder line, matching Rule 3. */
+  additionalMusicians?: CreditPerson[];
+  /** Count of still-missing additional musicians to render as extra
+   *  placeholder lines after any named `additionalMusicians` above
+   *  (e.g. "playa"'s two still-unnamed musicians). */
+  additionalMusiciansPlaceholderCount?: number;
+  technical: string[];
+}
+
 interface Cassette {
   id: string;
   title: string;
   loc: string;
   a: Track[];
   b: Track[];
+  /** Mission 24: absent for cassettes with no real credits yet
+   *  ("ciudad"/"bosque") -- see `Credits` above. */
+  credits?: Credits;
 }
 
 interface Props {
@@ -189,6 +219,33 @@ const PLACEHOLDER_LYRICS: { text: string; active?: boolean }[] = [
 // string match -- same [hidden]+data-* pattern as the cassette panels.
 function lyricsKeyFor(cassetteIndex: number, side: "a" | "b", trackIndex: number) {
   return `${cassetteIndex}-${side}-${trackIndex}`;
+}
+
+interface LinerTrackRow {
+  n: number;
+  title: string;
+  dur: string;
+  isPlaceholder: boolean;
+}
+
+// Mission 24: the liner notes screen's own tracklist display, padded
+// with clearly-marked placeholder rows out to `target` so a cassette
+// with only 1-3 real tracks per side still reads as roughly the 8-10
+// songs Esteban wants room to see -- this is display-only, for this
+// screen alone. It does NOT touch `cassettes[i].a`/`.b` (the real data
+// driving Screen 2's actual tracklist/playback), which stay exactly as
+// authored.
+function linerTracksFor(tracks: Track[], target: number): LinerTrackRow[] {
+  const rows: LinerTrackRow[] = tracks.map((t, i) => ({
+    n: i + 1,
+    title: t.title,
+    dur: t.dur,
+    isPlaceholder: false,
+  }));
+  for (let n = tracks.length + 1; n <= target; n++) {
+    rows.push({ n, title: "— pendiente —", dur: "—", isPlaceholder: true });
+  }
+  return rows;
 }
 
 const lyricsBlocks = cassettes.flatMap((c, i) => [
@@ -330,15 +387,36 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       {
         cassettes.map((c, i) => (
           <div class="cst-cassette-panel" data-cassette-index={i} hidden={i !== 0}>
-            <div class="cst-hero" style={`--box-color: var(${DISK_COLORS[i % DISK_COLORS.length]})`}>
-              <span class="cst-reels cst-reels--lg">
-                <span class="cst-reel cst-reel--lg" />
-                <span class="cst-reel cst-reel--lg" />
-              </span>
-              <div class="cst-hero-label">
-                <h2>{c.title}</h2>
-                <div class="cst-hero-loc">{c.loc}</div>
-              </div>
+            <!--
+              Mission 24: replaces the old big hero (.cst-hero, the
+              large color box with two spinning-reel icons) with a
+              narrow, full-width, tappable bar -- Esteban's final
+              approval, folded into missions/MISSION_24_liner-notes-
+              screen.md ahead of reference/liner-notes-demo-
+              reference.html's own (taller) bar. Opens the new liner
+              notes screen (#cstScreenLiner below). No `c.loc` here on
+              purpose -- Mission 24 removes it everywhere.
+            -->
+            <div class="cst-hero-bar-wrap">
+              <button
+                type="button"
+                class="cst-hero-bar"
+                data-cassette-index={i}
+                style={`--box-color: var(${DISK_COLORS[i % DISK_COLORS.length]})`}
+                aria-label={`ver créditos y portada de ${c.title}`}
+              >
+                <div class="cst-hero-bar-face">
+                  <span class="cst-hero-bar-title">{c.title}</span>
+                  <span class="cst-hero-bar-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 16v-5M12 8h.01" />
+                    </svg>
+                    créditos y portada
+                  </span>
+                </div>
+                <div class="cst-hero-bar-side" />
+              </button>
             </div>
             <div class="cst-side-toggle">
               <button type="button" class="cst-side-btn is-active" data-side="a">
@@ -403,6 +481,116 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
                   </span>
                 </button>
               ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!--
+      SCREEN: liner notes (Mission 24) -- reached by tapping the narrow
+      hero bar on Screen 2; its own back button returns to Screen 2
+      (#cstScreenCassette), not the shelf. One panel per cassette, same
+      show/hide-by-index pattern as .cst-cassette-panel above. No
+      `c.loc` anywhere here (Mission 24's explicit instruction). Real
+      credits content only for "cerro"/"playa" (see `credits` in
+      lado-a-lado-b.astro); "ciudad"/"bosque" (and cerro's own missing
+      "músicos adicionales") render the placeholder treatment below,
+      driven by `credits` being absent/partial -- not by anything typed
+      here per cassette.
+    -->
+    <div class="cst-screen" id="cstScreenLiner">
+      <div class="cst-topbar">
+        <button type="button" class="cst-back" id="cstBackToCassetteFromLiner" aria-label="volver">‹</button>
+        <span>liner notes</span>
+        <span></span>
+      </div>
+      {
+        cassettes.map((c, i) => (
+          <div class="cst-liner-panel" data-cassette-index={i} hidden={i !== 0}>
+            <!--
+              Placeholder cover art (Rule 3/Rule 6 -- no real art, no
+              new hex values): a brand-derived diagonal pattern, same
+              general approach as reference/liner-notes-demo-
+              reference.html, clearly labeled pending.
+            -->
+            <div class="cst-liner-art-showcase">
+              <span class="cst-liner-art-label">
+                portada — pendiente<br />(placeholder de marca por ahora)
+              </span>
+            </div>
+            <div class="cst-liner-heading">
+              <h2 class="cst-liner-title">{c.title}</h2>
+            </div>
+            <div class="cst-liner-body">
+              <div class="cst-liner-section">
+                <h3>músicos</h3>
+                {c.credits ? (
+                  c.credits.musicians.map((name) => <p class="cst-credit-line">{name}</p>)
+                ) : (
+                  <p class="cst-credit-line cst-credit-tbd">créditos — pendientes</p>
+                )}
+              </div>
+              <div class="cst-liner-section">
+                <h3>músicos adicionales</h3>
+                {c.credits ? (
+                  c.credits.additionalMusicians && c.credits.additionalMusicians.length > 0 ? (
+                    <>
+                      {c.credits.additionalMusicians.map((p) => (
+                        <p class="cst-credit-line">
+                          {p.name}
+                          {p.role ? (
+                            <>
+                              {" "}— <span class="cst-credit-role">{p.role}</span>
+                            </>
+                          ) : null}
+                        </p>
+                      ))}
+                      {Array.from({
+                        length: c.credits.additionalMusiciansPlaceholderCount ?? 0,
+                      }).map(() => (
+                        <p class="cst-credit-line cst-credit-tbd">
+                          — espacio reservado, pendiente de confirmar —
+                        </p>
+                      ))}
+                    </>
+                  ) : (
+                    <p class="cst-credit-line cst-credit-tbd">
+                      — espacio reservado, pendiente de confirmar —
+                    </p>
+                  )
+                ) : (
+                  <p class="cst-credit-line cst-credit-tbd">créditos — pendientes</p>
+                )}
+              </div>
+              <div class="cst-liner-section">
+                <h3>personal técnico</h3>
+                {c.credits ? (
+                  c.credits.technical.map((line) => <p class="cst-credit-line">{line}</p>)
+                ) : (
+                  <p class="cst-credit-line cst-credit-tbd">créditos — pendientes</p>
+                )}
+              </div>
+              <div class="cst-liner-section">
+                <h3>lado a</h3>
+                {linerTracksFor(c.a, 5).map((row) => (
+                  <div class={`cst-liner-track-row${row.isPlaceholder ? " is-tbd" : ""}`}>
+                    <span class="cst-liner-track-n">{row.n}</span>
+                    <span class="cst-liner-track-title">{row.title}</span>
+                    <span class="cst-liner-track-dur">{row.dur}</span>
+                  </div>
+                ))}
+              </div>
+              <div class="cst-liner-section">
+                <h3>lado b</h3>
+                {linerTracksFor(c.b, 4).map((row) => (
+                  <div class={`cst-liner-track-row${row.isPlaceholder ? " is-tbd" : ""}`}>
+                    <span class="cst-liner-track-n">{row.n}</span>
+                    <span class="cst-liner-track-title">{row.title}</span>
+                    <span class="cst-liner-track-dur">{row.dur}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ))
@@ -1044,64 +1232,109 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     }
   }
 
-  .cst-reels {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    background: color-mix(in srgb, black 28%, transparent);
-    border-radius: 0.3rem;
-    padding: 0.4rem 0;
-  }
+  /* ===== SCREEN 2: open cassette =====
+     Mission 24: narrow, full-width, tappable bar replacing the old big
+     hero (.cst-hero + its two spinning-reel icons, .cst-reels/.cst-reel
+     -- fully removed, nothing else in this file used those base
+     classes without the removed `--lg` modifier). Same horizontal
+     padding as the tracklist below it (0 1.3rem, via
+     .cst-hero-bar-wrap). Height (4rem) is deliberately shorter than
+     reference/liner-notes-demo-reference.html's own bar (4.6rem) --
+     Esteban's explicit "even narrower than the demo" instruction, the
+     demo height being a ceiling, not a target.
 
-  .cst-reel {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: repeating-conic-gradient(
-      color-mix(in srgb, var(--vintage-sky) 65%, transparent) 0 10deg,
-      transparent 10deg 20deg
-    );
-    box-shadow: inset 0 0 0 3px color-mix(in srgb, black 50%, transparent);
-  }
-
-  /* ===== SCREEN 2: open cassette ===== */
-  .cst-hero {
-    margin: 0.3rem 1.3rem 0;
-    border-radius: 0.7rem;
-    padding: 0.9rem;
-    box-shadow: 0 8px 20px color-mix(in srgb, black 40%, transparent);
+     Text/icon use --vintage-sky (light) rather than the old hero's
+     hardcoded --brown-tape, and the background is a darkened
+     color-mix() of --box-color rather than the flat color itself --
+     both deliberate: DISK_COLORS includes --brown-tape itself as one
+     of its 5 cycling colors, so a hardcoded brown-tape *text* color
+     (what the old .cst-hero-label h2 used) would render invisible
+     against a brown-tape *background* for whichever cassette lands on
+     that color. The carousel's own spines (Mission 20) already solved
+     this the same way; this bar follows that established, color-safe
+     pattern instead of carrying the old hero's latent contrast bug
+     forward into a new element. */
+  .cst-hero-bar-wrap {
+    padding: 0 1.3rem;
+    margin: 0.4rem 0 1rem;
     flex-shrink: 0;
-    background: var(--box-color);
   }
 
-  .cst-reels--lg {
-    background: color-mix(in srgb, black 28%, transparent);
-    border-radius: 0.4rem;
-    padding: 0.9rem 0;
+  .cst-hero-bar {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 4rem;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font-family: var(--font-body);
+    transition: transform 0.12s ease;
   }
 
-  .cst-reel--lg {
-    width: 40px;
-    height: 40px;
-    box-shadow: inset 0 0 0 5px color-mix(in srgb, black 50%, transparent);
+  .cst-hero-bar:hover,
+  .cst-hero-bar:focus-visible {
+    transform: scale(1.01);
   }
 
-  .cst-hero-label {
-    text-align: center;
-    margin-top: 0.7rem;
+  .cst-hero-bar:active {
+    transform: scale(0.99);
   }
 
-  .cst-hero-label h2 {
-    margin: 0;
-    font-size: 1.15rem;
-    color: var(--brown-tape);
+  .cst-hero-bar-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    padding: 0 1rem;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--box-color) 85%, black 5%) 0%,
+      color-mix(in srgb, var(--box-color) 60%, black 35%) 100%
+    );
+    box-shadow: 0 6px 14px color-mix(in srgb, black 40%, transparent);
   }
 
-  .cst-hero-loc {
-    font-size: 0.68rem;
-    color: var(--brown-tape);
-    opacity: 0.65;
-    margin-top: 0.1rem;
+  .cst-hero-bar-side {
+    position: absolute;
+    top: 0.25rem;
+    right: -0.3rem;
+    width: 0.3rem;
+    height: calc(100% - 0.5rem);
+    border-radius: 0 0.2rem 0.2rem 0;
+    background: color-mix(in srgb, var(--box-color) 55%, black 45%);
+  }
+
+  .cst-hero-bar-title {
+    min-width: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--vintage-sky);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cst-hero-bar-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.65rem;
+    color: var(--vintage-sky);
+    opacity: 0.85;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .cst-hero-bar-hint svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
 
   .cst-side-toggle {
@@ -1197,6 +1430,124 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
     height: 11px;
     fill: var(--vintage-sky);
     margin-left: 1px;
+  }
+
+  /* ===== SCREEN: liner notes (Mission 24) =====
+     Ported from reference/liner-notes-demo-reference.html's own
+     approach -- full-width cover-art showcase up top, credits/
+     tracklist flowing below as one scrolling column -- adapted to this
+     file's `cst-` prefix and its .cst-cassette-panel show/hide-by-index
+     convention (`.cst-liner-panel` here) rather than the demo's single-
+     cassette toggle. */
+  .cst-liner-art-showcase {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    background: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brown-tape) 70%, black 10%),
+      color-mix(in srgb, var(--brown-tape) 70%, black 10%) 14px,
+      color-mix(in srgb, var(--brown-tape) 60%, black 20%) 14px,
+      color-mix(in srgb, var(--brown-tape) 60%, black 20%) 28px
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vintage-sky) 12%, transparent);
+    flex-shrink: 0;
+  }
+
+  .cst-liner-art-label {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: color-mix(in srgb, var(--vintage-sky) 60%, transparent);
+    padding: 0 1.5rem;
+  }
+
+  .cst-liner-heading {
+    padding: 1rem 1.3rem 0.2rem;
+  }
+
+  .cst-liner-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin: 0;
+  }
+
+  .cst-liner-body {
+    padding: 0.6rem 1.3rem 2rem;
+  }
+
+  .cst-liner-section {
+    margin-bottom: 1.3rem;
+  }
+
+  .cst-liner-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .cst-liner-section h3 {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--polaroid-sunset);
+    margin: 0 0 0.5rem;
+  }
+
+  .cst-credit-line {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0 0 0.3rem;
+  }
+
+  .cst-credit-line:last-child {
+    margin-bottom: 0;
+  }
+
+  .cst-credit-role {
+    opacity: 0.65;
+    font-size: 0.75rem;
+  }
+
+  .cst-credit-tbd {
+    font-style: italic;
+    opacity: 0.55;
+  }
+
+  .cst-liner-track-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--vintage-sky) 10%, transparent);
+  }
+
+  .cst-liner-track-row.is-tbd {
+    opacity: 0.45;
+    font-style: italic;
+  }
+
+  .cst-liner-track-n {
+    opacity: 0.5;
+    width: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .cst-liner-track-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cst-liner-track-dur {
+    opacity: 0.7;
+    flex-shrink: 0;
   }
 
   /* ===== SCREEN 3: player ===== */
@@ -1742,11 +2093,12 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
 
     const screenShelf = root.querySelector<HTMLElement>("#cstScreenShelf");
     const screenCassette = root.querySelector<HTMLElement>("#cstScreenCassette");
+    const screenLiner = root.querySelector<HTMLElement>("#cstScreenLiner");
     const screenPlayer = root.querySelector<HTMLElement>("#cstScreenPlayer");
-    if (!screenShelf || !screenCassette || !screenPlayer) return;
+    if (!screenShelf || !screenCassette || !screenLiner || !screenPlayer) return;
 
     function showScreen(el: HTMLElement) {
-      [screenShelf, screenCassette, screenPlayer].forEach((s) =>
+      [screenShelf, screenCassette, screenLiner, screenPlayer].forEach((s) =>
         s?.classList.remove("is-active"),
       );
       el.classList.add("is-active");
@@ -1764,10 +2116,43 @@ const lyricsBlocks = cassettes.flatMap((c, i) => [
       const activePanel = cassettePanels.find(
         (panel) => panel.dataset.cassetteIndex === String(index),
       );
-      const title = activePanel?.querySelector("h2")?.textContent ?? "";
+      // Mission 24: the title used to come from the old hero's own
+      // `h2` (`.cst-hero-label h2`), removed along with that hero --
+      // now read from the new narrow bar's title span instead, so this
+      // topbar eyebrow doesn't silently go blank.
+      const title = activePanel?.querySelector(".cst-hero-bar-title")?.textContent ?? "";
       if (cassetteEyebrow) cassetteEyebrow.textContent = title;
       showScreen(screenCassette);
     }
+
+    // Mission 24: liner notes screen, reached by tapping the narrow
+    // hero bar on Screen 2 -- same show/hide-by-index pattern as
+    // `openCassette`/`.cst-cassette-panel` above, its own panel set.
+    const linerPanels = Array.from(
+      root.querySelectorAll<HTMLElement>(".cst-liner-panel"),
+    );
+
+    function openLiner(index: number) {
+      linerPanels.forEach((panel) => {
+        panel.toggleAttribute("hidden", panel.dataset.cassetteIndex !== String(index));
+      });
+      showScreen(screenLiner);
+    }
+
+    root.querySelectorAll<HTMLButtonElement>(".cst-hero-bar[data-cassette-index]").forEach((bar) => {
+      bar.addEventListener("click", () => {
+        const index = parseInt(bar.dataset.cassetteIndex ?? "0", 10);
+        openLiner(index);
+      });
+    });
+
+    // Back from liner notes returns to Screen 2 (the cassette screen),
+    // not the shelf -- the mission's explicit instruction, and a
+    // distinct id from Screen 3's own "#cstBackToCassette" below (two
+    // elements can't share one id; each needs its own listener).
+    root
+      .querySelector("#cstBackToCassetteFromLiner")
+      ?.addEventListener("click", () => showScreen(screenCassette));
 
     // Mission 20: the carousel replaced .cst-box with .cst-spine for
     // BOTH real and placeholder slots -- the [data-cassette-index]
